@@ -3,20 +3,25 @@ import { FaRegArrowAltCircleUp } from "react-icons/fa";
 
 const Footer = ({ navbarRef }) => {
   const lenis = useLenis();
+  const handleToTop = () => {
+    const target = navbarRef?.current || 0; // 0 = absolute top
+    if (lenis) {
+      lenis.scrollTo(target, {
+        offset: -80, // adjust for sticky header
+        duration: 1.1,
+        easing: (t) => 1 - Math.pow(1 - t, 3), // easeOutCubic
+      });
+    } else {
+      // fallback if Lenis not ready
+      if (target === 0) window.scrollTo({ top: 0, behavior: "smooth" });
+      else target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
   return (
     <div>
       <div className="bg-base-300 py-3 px-2 flex justify-end">
         <button
-          onClick={() => {
-            if (!navbarRef.current) return;
-            if (navbarRef?.count == 0) return;
-            lenis?.scrollTo(navbarRef.current, {
-              // adjust if you have a sticky navbar
-              offset: -80,
-              duration: 1.1,
-              easing: (t) => 1 - Math.pow(1 - t, 3), // easeOutCubic
-            });
-          }}
+          onClick={handleToTop}
           className="hover:border-none hover:bg-transparent text-xl flex items-center gap-1 cursor-pointer"
         >
           <FaRegArrowAltCircleUp />

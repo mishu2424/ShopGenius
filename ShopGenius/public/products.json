@@ -1,0 +1,601 @@
+[
+  {
+    "productId": "SGC001",
+    "title": "JMIERR Fleece Hoodie Sweatshirt",
+    "brand": "JMIERR",
+    "description": "Soft fleece hoodie with a cozy brushed interior and a classic pullover design. Perfect for cold weather or casual outings.",
+    "category": "clothes",
+    "targetGender": "men",
+    "price": 39.99,
+    "currency": "CAD",
+    "discount": {
+      "type": "percentage",
+      "value": 10,
+      "discountPercentage": 10,
+      "active": true
+    },
+    "salePrice": 35.99,
+    "availableSizes": ["S", "M", "L", "XL"],
+    "colors": [
+      {
+        "name": "Black",
+        "colorCode": "#000000",
+        "image": [
+          "https://i.ibb.co/4gRh07cK/close-up-portrait-man-shirt-mockup.jpg",
+          "https://i.ibb.co/SDcPr5WD/young-male-performer-dancing-building-stairs.jpg"
+        ]
+      },
+      {
+        "name": "Gray",
+        "colorCode": "#808080",
+        "image": [
+          "https://i.ibb.co/SDcPr5WD/young-male-performer-dancing-building-stairs.jpg",
+          "https://i.ibb.co/4gRh07cK/close-up-portrait-man-shirt-mockup.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 120 },
+    "rating": 4,
+    "sold_count": 243,
+    "popular": true,
+    "seller": {
+      "name": "Apurbo Dey Mishu",
+      "email": "apurbodeymishu856@gmail.com",
+      "storeName": "Mishu Apparel Co.",
+      "location": "Kingston, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGE002",
+    "title": "iPhone 14 Pro Max 256GB",
+    "brand": "Apple",
+    "description": "Latest Apple smartphone with A16 Bionic chip, 6.7-inch OLED display, and 48MP main camera. Supports MagSafe charging.",
+    "category": "electronics",
+    "targetGender": "none",
+    "price": 1599.99,
+    "currency": "CAD",
+    "discount": {
+      "active": false
+    },
+    "salePrice": 1359.99,
+    "colors": [
+      {
+        "name": "Space Black",
+        "colorCode": "#2B2B2B",
+        "image": [
+          "https://i.ibb.co/rR1WDz4V/still-life-tech-device.jpg",
+          "https://i.ibb.co/ch9RFKqJ/thai-nguyen-PAUpwa-ll-TE-unsplash.jpg"
+        ]
+      },
+      {
+        "name": "Deep Purple",
+        "colorCode": "#4B0082",
+        "image": [
+          "https://i.ibb.co/ch9RFKqJ/thai-nguyen-PAUpwa-ll-TE-unsplash.jpg",
+          "https://i.ibb.co/rR1WDz4V/still-life-tech-device.jpg"
+        ]
+      },
+      {
+        "name": "Silver",
+        "colorCode": "#C0C0C0",
+        "image": [
+          "https://i.ibb.co/GvK6DZPv/the-drink-break-9x59-Lj-Mtyis-unsplash.jpg",
+          "https://i.ibb.co/ch9RFKqJ/thai-nguyen-PAUpwa-ll-TE-unsplash.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "low_stock", "stock": 12 },
+    "rating": 4,
+    "sold_count": 582,
+    "popular": true,
+    "seller": {
+      "name": "Mishu Tishu",
+      "email": "mishutishu755@gmail.com",
+      "storeName": "SmartGenius Electronics",
+      "location": "Toronto, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGH003",
+    "title": "Sony WH-1000XM5 Noise Cancelling Headphones",
+    "brand": "Sony",
+    "description": "Industry-leading noise cancellation headphones with 30-hour battery life and premium comfort design.",
+    "category": "electronics",
+    "targetGender": "none",
+    "price": 549.99,
+    "currency": "CAD",
+    "discount": {
+      "type": "percentage",
+      "value": 12,
+      "discountPercentage": 12,
+      "active": true
+    },
+    "salePrice": 483.99,
+    "colors": [
+      {
+        "name": "Black",
+        "colorCode": "#000000",
+        "image": [
+          "https://i.ibb.co/fzBwNN1Z/headphones-laptop-home.jpg",
+          "https://i.ibb.co/gLyf7SGq/beautiful-middle-aged-woman-listening-music-through-headphones.jpg"
+        ]
+      },
+      {
+        "name": "Silver",
+        "colorCode": "#D9D9D9",
+        "image": [
+          "https://i.ibb.co/gLyf7SGq/beautiful-middle-aged-woman-listening-music-through-headphones.jpg",
+          "https://i.ibb.co/fzBwNN1Z/headphones-laptop-home.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 55 },
+    "rating": 4,
+    "sold_count": 154,
+    "seller": {
+      "name": "Apurbo Dey Mishu",
+      "email": "apurbodeymishu856@gmail.com",
+      "storeName": "Mishu Tech",
+      "location": "Kingston, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGB004",
+    "title": "L'Oréal Revitalift Hyaluronic Acid Serum",
+    "brand": "L'Oréal Paris",
+    "description": "Hydrating facial serum enriched with pure hyaluronic acid for smoother and plumper skin.",
+    "category": "beauty",
+    "targetGender": "women",
+    "price": 32.99,
+    "currency": "CAD",
+    "discount": {
+      "active": false
+    },
+    "salePrice": 26.39,
+    "colors": [
+      {
+        "name": "Clear",
+        "colorCode": "#F0F8FF",
+        "image": [
+          "https://i.ibb.co/ycqxB9XK/senior-woman-holding-serum-bottle.jpg",
+          "https://i.ibb.co/0pHzSGBG/beauty-treatments-portrait.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 230 },
+    "rating": 4,
+    "sold_count": 970,
+    "popular": true,
+    "seller": {
+      "name": "Mishu Tishu",
+      "email": "mishutishu755@gmail.com",
+      "storeName": "GlowGenius Cosmetics",
+      "location": "Toronto, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGA005",
+    "title": "Michael Kors Leather Tote Bag",
+    "brand": "Michael Kors",
+    "description": "Elegant genuine leather tote bag with gold-tone hardware, ideal for work or travel.",
+    "category": "accessories",
+    "targetGender": "women",
+    "price": 259.99,
+    "currency": "CAD",
+    "discount": {
+      "active": false
+    },
+    "salePrice": 213.19,
+    "colors": [
+      {
+        "name": "Black",
+        "colorCode": "#000000",
+        "image": [
+          "https://i.ibb.co/4RXH4Sm2/bag-hanging-from-furniture-item-indoors.jpg",
+          "https://i.ibb.co/6GhxFzf/bag-hanging-from-furniture-item-indoors-1.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 48 },
+    "rating": 4,
+    "sold_count": 328,
+    "seller": {
+      "name": "Apurbo Dey Mishu",
+      "email": "apurbodeymishu856@gmail.com",
+      "storeName": "Mishu Fashion",
+      "location": "Kingston, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGH006",
+    "title": "Dyson V15 Detect Cordless Vacuum Cleaner",
+    "brand": "Dyson",
+    "description": "Smart laser-guided cordless vacuum with real-time particle detection and 60 minutes of runtime.",
+    "category": "home",
+    "targetGender": "none",
+    "price": 999.99,
+    "currency": "CAD",
+    "discount": {
+      "type": "percentage",
+      "value": 10,
+      "discountPercentage": 10,
+      "active": true
+    },
+    "salePrice": 899.99,
+    "colors": [
+      {
+        "name": "Silver",
+        "colorCode": "#C0C0C0",
+        "image": [
+          "https://i.ibb.co/7t72xc6X/white-handheld-vacuum-cleaner-leaning-against-wall.jpg",
+          "https://i.ibb.co/ksg7Npmy/andrey-matveev-AKEMh3y86d-E-unsplash.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 30 },
+    "rating": 4,
+    "sold_count": 77,
+    "seller": {
+      "name": "Mishu Tishu",
+      "email": "mishutishu755@gmail.com",
+      "storeName": "HomeGenius Appliances",
+      "location": "Toronto, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGC007",
+    "title": "Nike Ultraboost 23 Running Shoes",
+    "brand": "Nike",
+    "description": "Responsive running shoes made with Primeknit upper and Boost cushioning for all-day comfort.",
+    "category": "clothes",
+    "targetGender": "unisex",
+    "price": 219.99,
+    "currency": "CAD",
+    "discount": {
+      "type": "percentage",
+      "value": 10,
+      "discountPercentage": 10,
+      "active": true
+    },
+    "salePrice": 197.99,
+    "colors": [
+      {
+        "name": "White",
+        "colorCode": "#FFFFFF",
+        "image": [
+          "https://i.ibb.co/XZjdQYBX/amirul-muiz-u2-VULMf-ZNM-unsplash.jpg",
+          "https://i.ibb.co/fznPYk1B/amirul-muiz-r8sz-Kh-Uyj-WM-unsplash.jpg"
+        ]
+      },
+      {
+        "name": "Black",
+        "colorCode": "#000000",
+        "image": [
+          "https://i.ibb.co/21K9wxYq/maria-sime-S1kyq-Kgu08-unsplash.jpg",
+          "https://i.ibb.co/zVxkmXwx/thomas-phan-p-Ys5-GBs-Cj-XM-unsplash.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 80 },
+    "rating": 4,
+    "sold_count": 654,
+    "popular": true,
+    "seller": {
+      "name": "Apurbo Dey Mishu",
+      "email": "apurbodeymishu856@gmail.com",
+      "storeName": "Mishu Sports",
+      "location": "Kingston, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGE008",
+    "title": "Samsung Galaxy Watch 6 Classic",
+    "brand": "Samsung",
+    "description": "Smartwatch with fitness tracking, AMOLED display, and advanced health monitoring features.",
+    "category": "electronics",
+    "targetGender": "unisex",
+    "price": 499.99,
+    "currency": "CAD",
+    "discount": {
+      "active": false
+    },
+    "salePrice": 424.99,
+    "colors": [
+      {
+        "name": "Black",
+        "colorCode": "#000000",
+        "image": [
+          "https://i.ibb.co/1YT3L7Tg/sofya-kholodkova-N2ln5e0-BXc-E-unsplash.jpg",
+          "https://i.ibb.co/jvvQVfzg/maria-sime-lv-VBb-ARla-Y-unsplash.jpg"
+        ]
+      },
+      {
+        "name": "Silver",
+        "colorCode": "#C0C0C0",
+        "image": [
+          "https://i.ibb.co/BVHK6jCm/pexels-marius-mann-772581-1697220.jpg",
+          "https://i.ibb.co/R408NYVV/dylan-wilhelmus-NOHf-X4-Iqgvw-unsplash.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 42 },
+    "rating": 4,
+    "sold_count": 341,
+    "popular": true,
+    "seller": {
+      "name": "Mishu Tishu",
+      "email": "mishutishu755@gmail.com",
+      "storeName": "TechGenius",
+      "location": "Toronto, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGH009",
+    "title": "Instant Pot Duo 7-in-1 Electric Pressure Cooker",
+    "brand": "Instant Pot",
+    "description": "Multi-use pressure cooker that replaces seven kitchen appliances, perfect for quick meals.",
+    "category": "home",
+    "targetGender": "none",
+    "price": 159.99,
+    "currency": "CAD",
+    "discount": {
+      "type": "percentage",
+      "value": 20,
+      "discountPercentage": 20,
+      "active": true
+    },
+    "salePrice": 127.99,
+    "colors": [
+      {
+        "name": "Stainless Steel",
+        "colorCode": "#B0B0B0",
+        "image": [
+          "https://i.ibb.co/SXyHYJmh/kedibone-isaac-makhumisane-Ifhr-Wu-Qnb-Xk-unsplash.jpg",
+          "https://i.ibb.co/8LwkCXT8/pexels-manas-saxena-3910793-5828508.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 110 },
+    "rating": 4,
+    "sold_count": 1280,
+    "popular": true,
+    "seller": {
+      "name": "Apurbo Dey Mishu",
+      "email": "apurbodeymishu856@gmail.com",
+      "storeName": "HomeEase Appliances",
+      "location": "Kingston, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGA010",
+    "title": "Ray-Ban RB2140 Original Wayfarer Sunglasses",
+    "brand": "Ray-Ban",
+    "description": "Classic Ray-Ban Wayfarer sunglasses with durable acetate frame and UV protection lenses.",
+    "category": "accessories",
+    "targetGender": "unisex",
+    "price": 199.99,
+    "currency": "CAD",
+    "discount": {
+      "type": "percentage",
+      "value": 5,
+      "discountPercentage": 5,
+      "active": true
+    },
+    "salePrice": 189.99,
+    "colors": [
+      {
+        "name": "Black",
+        "colorCode": "#000000",
+        "image": [
+          "https://i.ibb.co/SXM5wb3p/vecteezy-fashionable-sunglass-on-floral-fabric-vacation-style-travel-70375081.jpg",
+          "https://i.ibb.co/KzFvQ56c/vecteezy-ai-generated-stainless-steel-pressure-cooker-on-kitchen-counter-43171320.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 63 },
+    "rating": 4,
+    "sold_count": 448,
+    "popular": false,
+    "seller": {
+      "name": "Mishu Tishu",
+      "email": "mishutishu755@gmail.com",
+      "storeName": "SunStyle Optics",
+      "location": "Toronto, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGB011",
+    "title": "Dior Sauvage Eau de Toilette for Men",
+    "brand": "Dior",
+    "description": "A bold fragrance with fresh top notes of bergamot and woody amber base, perfect for daily wear.",
+    "category": "beauty",
+    "targetGender": "men",
+    "price": 149.99,
+    "currency": "CAD",
+    "discount": {
+      "active": false
+    },
+    "salePrice": 134.99,
+    "colors": [
+      {
+        "name": "Navy Blue Bottle",
+        "colorCode": "#0C1A2E",
+        "image": [
+          "https://i.ibb.co/TqvcYM4K/ben-mathis-seibel-3-LYF2-Yp-F7-Xg-unsplash.jpg",
+          "https://i.ibb.co/d0Dq5YBz/adrian-regeci-q-KGn3-R2-Xoig-unsplash.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 90 },
+    "rating": 4,
+    "sold_count": 874,
+    "popular": true,
+    "seller": {
+      "name": "Apurbo Dey Mishu",
+      "email": "apurbodeymishu856@gmail.com",
+      "storeName": "Luxury Fragrance Hub",
+      "location": "Kingston, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGH013",
+    "title": "Nespresso Vertuo Plus Coffee and Espresso Machine",
+    "brand": "Nespresso",
+    "description": "Automatic coffee machine with one-touch brewing and Aeroccino milk frother.",
+    "category": "home",
+    "targetGender": "none",
+    "price": 299.99,
+    "currency": "CAD",
+    "discount": {
+      "type": "percentage",
+      "value": 12,
+      "discountPercentage": 12,
+      "active": true
+    },
+    "salePrice": 263.99,
+    "colors": [
+      {
+        "name": "Black",
+        "colorCode": "#000000",
+        "image": [
+          "https://i.ibb.co/sdz6NLvb/vecteezy-coffee-machine-isolated-on-white-background-50631822.jpg",
+          "https://i.ibb.co/VFB0MQd/pavlo-talpa-56-YB6-Ycu1-C4-unsplash.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 44 },
+    "rating": 4,
+    "sold_count": 392,
+    "popular": false,
+    "seller": {
+      "name": "Apurbo Dey Mishu",
+      "email": "apurbodeymishu856@gmail.com",
+      "storeName": "BrewSmart Appliances",
+      "location": "Kingston, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGC014",
+    "title": "Levi's 511 Slim Fit Jeans",
+    "brand": "Levi's",
+    "description": "Iconic slim fit denim jeans designed for comfort and versatility.",
+    "category": "clothes",
+    "targetGender": "men",
+    "price": 89.99,
+    "currency": "CAD",
+    "discount": {
+      "active": false
+    },
+    "salePrice": 80.99,
+    "colors": [
+      {
+        "name": "Indigo Blue",
+        "colorCode": "#3B5998",
+        "image": [
+          "https://i.ibb.co/NnyRxsR9/maria-kovalets-N9t25-W-dv-Dc-unsplash.jpg",
+          "https://i.ibb.co/SwcPH1nH/maude-frederique-lavoie-EDSTj4k-CUcw-unsplash.jpg"
+        ]
+      },
+      {
+        "name": "Black Denim",
+        "colorCode": "#2C2C2C",
+        "image": [
+          "https://i.ibb.co/yBPPC3J7/tuananh-blue-gt-V6-Jx-KPJ-o-unsplash.jpg",
+          "https://i.ibb.co/TxTC5mFk/tuananh-blue-Mmwr-ZZy7-Wt-M-unsplash.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 95 },
+    "rating": 4,
+    "sold_count": 690,
+    "popular": true,
+    "seller": {
+      "name": "Apurbo Dey Mishu",
+      "email": "apurbodeymishu856@gmail.com",
+      "storeName": "DenimGenius",
+      "location": "Kingston, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGB015",
+    "title": "Maybelline SuperStay Matte Ink Liquid Lipstick",
+    "brand": "Maybelline",
+    "description": "Long-lasting liquid lipstick that provides bold matte color for up to 16 hours.",
+    "category": "beauty",
+    "targetGender": "women",
+    "price": 15.99,
+    "currency": "CAD",
+    "discount": {
+      "type": "percentage",
+      "value": 5,
+      "discountPercentage": 5,
+      "active": true
+    },
+    "salePrice": 15.19,
+    "colors": [
+      {
+        "name": "Pioneer Red",
+        "colorCode": "#B22222",
+        "image": [
+          "https://i.ibb.co/5Wv675H3/muhammad-tayyab-l-Z093-Fh-MJHA-unsplash.jpg",
+          "https://i.ibb.co/kVptR7Z7/maria-lupan-Nf-Zn4u-Sj-ZMA-unsplash.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 300 },
+    "rating": 4,
+    "sold_count": 1220,
+    "popular": true,
+    "seller": {
+      "name": "Mishu Tishu",
+      "email": "mishutishu755@gmail.com",
+      "storeName": "BeautyHub Canada",
+      "location": "Toronto, ON, Canada"
+    }
+  },
+  {
+    "productId": "SGA016",
+    "title": "Fossil Gen 6 Hybrid Smartwatch",
+    "brand": "Fossil",
+    "description": "Stylish hybrid smartwatch with heart rate tracking and customizable dials.",
+    "category": "accessories",
+    "targetGender": "men",
+    "price": 329.99,
+    "currency": "CAD",
+    "discount": {
+      "type": "percentage",
+      "value": 12,
+      "discountPercentage": 12,
+      "active": true
+    },
+    "salePrice": 290.39,
+    "colors": [
+      {
+        "name": "Brown Leather",
+        "colorCode": "#8B4513",
+        "image": [
+          "https://i.ibb.co/hJRqqX6M/matus-gocman-8-Xvi4-FG3-Pd-M-unsplash.jpg",
+          "https://i.ibb.co/2G6RVFk/omar-al-ghosson-Gd-p-Hb4wofo-unsplash.jpg"
+        ]
+      },
+      {
+        "name": "Gunmetal Gray",
+        "colorCode": "#555555",
+        "image": [
+          "https://i.ibb.co/rKStFrT2/andrey-matveev-2-CWmo-Eyzn-Zg-unsplash.jpg",
+          "https://i.ibb.co/jvrGpfFV/andrey-matveev-l-M9-Fpj-VC3w-Q-unsplash.jpg"
+        ]
+      }
+    ],
+    "availability": { "status": "in_stock", "stock": 38 },
+    "rating": 4,
+    "sold_count": 222,
+    "popular": false,
+    "seller": {
+      "name": "Apurbo Dey Mishu",
+      "email": "apurbodeymishu856@gmail.com",
+      "storeName": "Mishu Timepieces",
+      "location": "Kingston, ON, Canada"
+    }
+  }
+]

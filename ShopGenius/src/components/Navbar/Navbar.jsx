@@ -2,9 +2,29 @@ import { FaCartShopping } from "react-icons/fa6";
 import logo from "../../assets/logo.png";
 import { IoIosSearch } from "react-icons/io";
 import { NavLink } from "react-router-dom";
-const Navbar = ({navbarRef}) => {
+import { useState } from "react";
+const Navbar = ({ navbarRef }) => {
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  // // Optional: lock scroll while dimmed
+  // useEffect(() => {
+  //   if (searchFocused) {
+  //     document.body.style.overflow = "hidden";
+  //   } else {
+  //     document.body.style.overflow = "";
+  //   }
+  //   return () => (document.body.style.overflow = "");
+  // }, [searchFocused]);
+
   return (
-    <div ref={navbarRef}>
+    <div ref={navbarRef} className="relative z-50">
+      {/* Dim overlay */}
+      {searchFocused && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-[1px] transition-opacity"
+          onClick={() => setSearchFocused(false)}
+        />
+      )}
       <div className="navbar flex items-center justify-between bg-[#2c3641] text-white shadow-sm">
         <div className="flex items-center">
           <div className="dropdown">
@@ -63,7 +83,8 @@ const Navbar = ({navbarRef}) => {
                     </div>
                     <ul
                       tabIndex="-1"
-                      className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow">
+                      className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow"
+                    >
                       <li>
                         <a className="justify-between">Profile</a>
                       </li>
@@ -84,7 +105,18 @@ const Navbar = ({navbarRef}) => {
               <input
                 type="text"
                 placeholder="Search"
-                className="input border-r-0 text-gray-500 rounded-0 w-24 md:w-96"
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                className="
+                  input w-24 md:w-96
+                  rounded-none rounded-l-lg
+                  border-0
+                  focus:outline-none
+                  focus:ring-0
+                  focus:border-transparent
+                  focus:shadow-none
+                  text-gray-700
+                "
               />
               <button type="submit">
                 <IoIosSearch
@@ -122,13 +154,15 @@ const Navbar = ({navbarRef}) => {
         </div>
 
         <div className="flex items-center gap-2">
-          <NavLink to={`/returns&orders`}><span className="text-sm">Returns & orders</span></NavLink>
+          <NavLink to={`/returns&orders`}>
+            <span className="text-sm">Returns & orders</span>
+          </NavLink>
           <div className="relative inline-flex ">
-          <FaCartShopping size={24} className="text-white" />
-          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-semibold rounded-full px-1.5">
-            {0}
-          </span>
-        </div>
+            <FaCartShopping size={24} className="text-white" />
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-semibold rounded-full px-1.5">
+              {0}
+            </span>
+          </div>
         </div>
       </div>
     </div>

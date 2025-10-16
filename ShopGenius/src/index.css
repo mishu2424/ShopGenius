@@ -3,6 +3,7 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+
 @theme {
   --font-jost: Jost, sans-serif;
   --font-bebas: Bebas Neue, sans-serif;
