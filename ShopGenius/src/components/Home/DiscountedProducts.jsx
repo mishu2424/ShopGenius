@@ -2,6 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import useAxiosCommon from "../../hooks/useAxiosCommon";
 import { MdDiscount } from "react-icons/md";
+import { Link } from "react-router";
+
+import "./DiscountedProduct.css";
 
 // Import css files
 import "slick-carousel/slick/slick.css";
@@ -9,6 +12,16 @@ import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 import Container from "../Shared/Container";
 import Title from "../Shared/Title";
+
+// swiper js
+import { Swiper, SwiperSlide } from "swiper/react";
+
+// Import Swiper styles
+import "swiper/css";
+import "swiper/css/effect-fade";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import { EffectFade, Navigation, Pagination } from "swiper/modules";
 
 const DiscountedProducts = () => {
   const axiosCommon = useAxiosCommon();
@@ -62,40 +75,68 @@ const DiscountedProducts = () => {
   return (
     <Container>
       <div className="my-10">
-        <Title title={"Sale"} borderColor={"border-red-500"} icon={MdDiscount} iconColor={'text-red-500'}/>
+        <Title
+          title={"Sale"}
+          borderColor={"border-red-500"}
+          icon={MdDiscount}
+          iconColor={"text-red-500"}
+        />
         <div className="relative">
           <Slider {...settings}>
-            {discountedProducts.map((products) => (
-              <div className="max-w-xs rounded border border-transparent hover:border-purple-500 hover:scale-105 cursor-pointer duration-500 flex flex-col bg-white shadow-lg dark:bg-gray-800">
-                {/* Title + Description */}
-                <div className="px-4 py-4">
-                  <h1 className="text-xl font-bold text-gray-800 uppercase dark:text-white">
-                    {products?.title}
-                  </h1>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 truncate">
-                    {products?.description}
-                  </p>
-                </div>
+            {discountedProducts.map((product) => (
+              <Link to={`/product/${product?.productId}`} key={product.productId}>
+                <div className="max-w-xs rounded border border-transparent hover:border-purple-500 hover:scale-105 cursor-pointer duration-500 flex flex-col bg-white shadow-lg dark:bg-gray-800">
+                  {/* Title + Description */}
+                  <div className="px-4 py-4">
+                    <h1 className="text-xl font-bold text-gray-800 uppercase dark:text-white">
+                      {product?.title}
+                    </h1>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 truncate">
+                      {product?.description}
+                    </p>
+                  </div>
 
-                {/* Image */}
-                <img
-                  className="object-cover w-full h-52"
-                  src={products?.colors[0]?.image}
-                  alt={products?.title}
-                />
+                  <div className="slider-container">
+                    <Swiper
+                      spaceBetween={30}
+                      effect={"fade"}
+                      navigation={true}
+                      modules={[EffectFade, Navigation, Pagination]}
+                      className="mySwiper"
+                    >
+                      <SwiperSlide>
+                        <img
+                          className="object-cover w-full h-52"
+                          src={
+                            product?.colors[0]?.image ||
+                            product?.colors[1]?.image
+                          }
+                          alt={product?.title}
+                        />
+                      </SwiperSlide>
+                      <SwiperSlide>
+                        <img
+                          className="object-cover w-full h-52"
+                          src={
+                            product?.colors[1]?.image ||
+                            product?.colors[0]?.image
+                          }
+                          alt={product?.title}
+                        />
+                      </SwiperSlide>
+                    </Swiper>
+                  </div>
 
-                {/* Price + Button (stick to bottom) */}
-                <div>
-                  <div className="flex items-center justify-between px-4 py-2 bg-gray-900 mt-auto">
-                    <h5 className="text-lg font-bold text-white">
-                      ${products?.price}
-                    </h5>
-                    <button className="px-2 py-1 text-xs font-semibold text-gray-900 uppercase transition-colors duration-300 transform bg-white rounded hover:bg-gray-200 focus:bg-gray-400 focus:outline-none">
-                      Add to cart
-                    </button>
+                  {/* Price + Button (stick to bottom) */}
+                  <div>
+                    <div className="flex items-center justify-between px-4 py-2 bg-gray-900 mt-auto">
+                      <h5 className="text-lg font-bold text-white">
+                        ${product?.price}
+                      </h5>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </Slider>
         </div>

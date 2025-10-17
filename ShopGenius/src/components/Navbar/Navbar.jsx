@@ -1,8 +1,9 @@
 import { FaCartShopping } from "react-icons/fa6";
 import logo from "../../assets/logo.png";
 import { IoIosSearch } from "react-icons/io";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { useState } from "react";
+import profile from '../../assets/placeholder.jpg'
 const Navbar = ({ navbarRef }) => {
   const [searchFocused, setSearchFocused] = useState(false);
 
@@ -77,7 +78,7 @@ const Navbar = ({ navbarRef }) => {
                       <div className="w-full">
                         <img
                           alt="Tailwind CSS Navbar component"
-                          src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                          src={profile}
                         />
                       </div>
                     </div>
@@ -90,6 +91,9 @@ const Navbar = ({ navbarRef }) => {
                       </li>
                       <li>
                         <a>Dashboard</a>
+                      </li>
+                      <li>
+                        <Link to={`login`}>Log in</Link>
                       </li>
                     </ul>
                   </div>
@@ -135,7 +139,7 @@ const Navbar = ({ navbarRef }) => {
               <div className="w-10 rounded-full">
                 <img
                   alt="Tailwind CSS Navbar component"
-                  src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                  src={profile}
                 />
               </div>
             </div>
@@ -148,6 +152,9 @@ const Navbar = ({ navbarRef }) => {
               </li>
               <li>
                 <a>Dashboard</a>
+              </li>
+              <li>
+                <Link to={`login`}>Log in</Link>
               </li>
             </ul>
           </div>

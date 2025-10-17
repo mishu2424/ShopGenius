@@ -1,0 +1,17 @@
+/* Make Swiper arrows smaller */
+.swiper-button-next,
+.swiper-button-prev {
+  width: 20px !important;
+  height: 20px !important;
+  color: #2381D3 !important;
+  font-size: 10px !important;
+}
+
+
+/* Optional: Move them closer to edges */
+.swiper-button-next {
+  right: 4px !important;
+}
+.swiper-button-prev {
+  left: 4px !important;
+}
