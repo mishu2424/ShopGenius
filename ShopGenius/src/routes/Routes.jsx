@@ -5,27 +5,39 @@ import Home from "../pages/Home/Home";
 import ProductDetails from "../components/ProductDetails/ProductDetails";
 import Login from "../pages/Authentication/Login";
 import SignUp from "../pages/Authentication/SignUp";
+import Carts from "../pages/Carts/Carts";
+import PrivateRoute from "./PrivateRoute";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <Main/>,
-    errorElement:<ErrorPage/>,
-    children:[
-        {
-            path:'/',
-            element:<Home/>
-        },
-        {
-          path:'/product/:id',
-          element:<ProductDetails/>
-        }
-    ]
+    element: <Main />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        path: "/",
+        element: <Home />,
+      },
+      {
+        path: "/product/:id",
+        element: <ProductDetails />,
+      },
+      {
+        path: "/carts",
+        element: (
+          <PrivateRoute>
+            <Carts />
+          </PrivateRoute>
+        ),
+      },
+    ],
   },
   {
-    path:'login', element:<Login/>
+    path: "login",
+    element: <Login />,
   },
   {
-    path:'signup', element:<SignUp/>
-  }
+    path: "signup",
+    element: <SignUp />,
+  },
 ]);

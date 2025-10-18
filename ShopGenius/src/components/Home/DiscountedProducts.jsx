@@ -28,9 +28,8 @@ const DiscountedProducts = () => {
   const { data: discountedProducts, isLoading } = useQuery({
     queryKey: ["discounted-products"],
     queryFn: async () => {
-      const { data } = await axiosCommon("./products.json");
-      const sortedData = data.filter((dt) => dt.discount.active);
-      return sortedData;
+      const { data } = await axiosCommon("/discounted-products");
+      return data;
     },
   });
   var settings = {
@@ -70,7 +69,7 @@ const DiscountedProducts = () => {
       },
     ],
   };
-  console.log(discountedProducts);
+  // console.log(discountedProducts);
   if (isLoading) return <LoadingSpinner />;
   return (
     <Container>
@@ -84,7 +83,7 @@ const DiscountedProducts = () => {
         <div className="relative">
           <Slider {...settings}>
             {discountedProducts.map((product) => (
-              <Link to={`/product/${product?.productId}`} key={product.productId}>
+              <Link to={`/product/${product?._id}`} key={product.productId}>
                 <div className="max-w-xs rounded border border-transparent hover:border-purple-500 hover:scale-105 cursor-pointer duration-500 flex flex-col bg-white shadow-lg dark:bg-gray-800">
                   {/* Title + Description */}
                   <div className="px-4 py-4">

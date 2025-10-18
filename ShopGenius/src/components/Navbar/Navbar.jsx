@@ -3,9 +3,14 @@ import logo from "../../assets/logo.png";
 import { IoIosSearch } from "react-icons/io";
 import { Link, NavLink } from "react-router-dom";
 import { useState } from "react";
-import profile from '../../assets/placeholder.jpg'
+import profile from "../../assets/placeholder.jpg";
+import useAuth from "../../hooks/useAuth";
+import useCart from "../../hooks/useCart";
+import LoadingSpinner from "../Shared/LoadingSpinner";
 const Navbar = ({ navbarRef }) => {
   const [searchFocused, setSearchFocused] = useState(false);
+  const { user, logOut } = useAuth() || {};
+  const [carts, isCartLoading] = useCart();
 
   // // Optional: lock scroll while dimmed
   // useEffect(() => {
@@ -17,6 +22,7 @@ const Navbar = ({ navbarRef }) => {
   //   return () => (document.body.style.overflow = "");
   // }, [searchFocused]);
 
+  if (isCartLoading) return <LoadingSpinner />;
   return (
     <div ref={navbarRef} className="relative z-50">
       {/* Dim overlay */}
@@ -77,8 +83,9 @@ const Navbar = ({ navbarRef }) => {
                     >
                       <div className="w-full">
                         <img
-                          alt="Tailwind CSS Navbar component"
-                          src={profile}
+                          referrerPolicy="no-referrer"
+                          alt="user profile"
+                          src={user && user.photoURL ? user.photoURL : profile}
                         />
                       </div>
                     </div>
@@ -101,7 +108,9 @@ const Navbar = ({ navbarRef }) => {
               </li>
             </ul>
           </div>
-          <img src={logo} alt="logo" className="w-14 h-14" />
+          <Link to={`/`}>
+            <img src={logo} alt="logo" className="w-14 h-14" />
+          </Link>
         </div>
         <div className="flex gap-2">
           <form className="hidden md:flex">
@@ -138,8 +147,9 @@ const Navbar = ({ navbarRef }) => {
             >
               <div className="w-10 rounded-full">
                 <img
+                  referrerPolicy="no-referrer"
                   alt="Tailwind CSS Navbar component"
-                  src={profile}
+                  src={user && user.photoURL ? user.photoURL : profile}
                 />
               </div>
             </div>
@@ -154,7 +164,11 @@ const Navbar = ({ navbarRef }) => {
                 <a>Dashboard</a>
               </li>
               <li>
-                <Link to={`login`}>Log in</Link>
+                {user ? (
+                  <span onClick={logOut}>Log out</span>
+                ) : (
+                  <Link to={`login`}>Log in</Link>
+                )}
               </li>
             </ul>
           </div>
@@ -164,12 +178,16 @@ const Navbar = ({ navbarRef }) => {
           <NavLink to={`/returns&orders`}>
             <span className="text-sm">Returns & orders</span>
           </NavLink>
-          <div className="relative inline-flex ">
-            <FaCartShopping size={24} className="text-white" />
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-semibold rounded-full px-1.5">
-              {0}
-            </span>
-          </div>
+          {user && user?.email && (
+            <Link to={`/carts`}>
+              <div className="relative inline-flex ">
+                <FaCartShopping size={24} className="text-white" />
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-semibold rounded-full px-1.5">
+                  {user ? carts?.length : 0}
+                </span>
+              </div>
+            </Link>
+          )}
         </div>
       </div>
     </div>
