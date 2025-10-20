@@ -7,18 +7,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AuthProvider from "./providers/AuthProvider.jsx";
 import SmoothScrollProvider from "./components/Shared/SmoothScrollProvider.jsx";
 import { Toaster } from "react-hot-toast";
+import ProductSearchProvider from "./providers/ProductSearchProvider.jsx";
+import { HelmetProvider } from "react-helmet-async";
 
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
+  <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SmoothScrollProvider>
-          <RouterProvider router={router} />
-        </SmoothScrollProvider>
-        <Toaster />
+        <ProductSearchProvider>
+          <SmoothScrollProvider>
+            <RouterProvider router={router} />
+          </SmoothScrollProvider>
+          <Toaster />
+        </ProductSearchProvider>
       </AuthProvider>
     </QueryClientProvider>
-  </StrictMode>
+  </HelmetProvider>
 );

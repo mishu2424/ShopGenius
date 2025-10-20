@@ -7,6 +7,7 @@ import Login from "../pages/Authentication/Login";
 import SignUp from "../pages/Authentication/SignUp";
 import Carts from "../pages/Carts/Carts";
 import PrivateRoute from "./PrivateRoute";
+import Products from "../pages/Products/Products";
 
 export const router = createBrowserRouter([
   {
@@ -30,6 +31,10 @@ export const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
+      {
+        path:`/products`,
+        element:<Products/>
+      }
     ],
   },
   {

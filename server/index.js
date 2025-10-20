@@ -70,18 +70,125 @@ async function run() {
 
     // products
     app.get("/products", async (req, res) => {
-      const result = await productCollection.find({}).toArray();
+      const page = parseInt(req?.query?.page) || 1;
+      const limit = parseInt(req?.query?.limit) || 10;
+      const skip = (page - 1) * limit;
+      const sort = req?.query?.sort;
+      const search = req?.query?.search;
+      const inStock = req?.query?.inStock;
+      const onSale = req?.query?.onSale;
+      const categoryName = req?.query?.category;
+      const popular = req?.query?.popular;
+
+      // console.log(inStock, onSale, typeof inStock, typeof onSale);
+
+      let query = {};
+      if (search) {
+        query = {
+          $or: [
+            { brand: { $regex: search, $options: "i" } },
+            { category: { $regex: search, $options: "i" } },
+            { title: { $regex: search, $options: "i" } },
+          ],
+        };
+      }
+
+      if (inStock === "true") {
+        query = { ...query, "availability.available": true };
+      }
+
+      if (onSale === "true") {
+        query = { ...query, "discount.active": true };
+      }
+
+      let options = {};
+
+      if (popular === "true") {
+        options = { sold_count: -1 };
+      }
+
+      if (sort === "asc") {
+        options = { price: "1" };
+      } else if (sort === "desc") {
+        options = { price: "-1" };
+      } else if (sort === "asc-r") {
+        options = { "rating.score": "1" };
+      } else if (sort === "desc-r") {
+        options = { "rating.score": "-1" };
+      }
+
+      if (categoryName) {
+        query = { ...query, category: categoryName };
+      }
+
+      const result = await productCollection
+        .find(query)
+        .sort(options)
+        .skip(skip)
+        .limit(limit)
+        .toArray();
       res.send(result);
     });
+
+    app.get("/products-count", async (req, res) => {
+      const search = req?.query?.search;
+      const categoryName = req?.query?.category;
+      const inStock = req?.query?.inStock;
+      const onSale = req?.query?.onSale;
+      let query = {};
+      if (search) {
+        query = {
+          $or: [
+            { brand: { $regex: search, $options: "i" } },
+            { category: { $regex: search, $options: "i" } },
+            { title: { $regex: search, $options: "i" } },
+          ],
+        };
+      }
+
+      if (inStock === "true") {
+        query = { ...query, "availability.available": true };
+      }
+
+      if (onSale === "true") {
+        query = { ...query, "discount.active": true };
+      }
+
+      if (categoryName) {
+        query = { ...query, category: categoryName };
+      }
+
+      const count = await productCollection.countDocuments(query);
+      res.send({ count });
+    });
+
     app.get("/product/details/:id", async (req, res) => {
       const { id } = req?.params;
       const result = await productCollection.findOne({ _id: new ObjectId(id) });
       res.send(result);
     });
+
     app.get("/discounted-products", async (req, res) => {
       const result = await productCollection
         .find({ "discount.active": true })
         .toArray();
+      res.send(result);
+    });
+
+    // popular products
+    app.get(`/popular-products`, async (req, res) => {
+      const result = await productCollection.find({ popular: true }).toArray();
+      res.send(result);
+    });
+
+    // best-seller
+    app.get(`/best-seller-products`, async (req, res) => {
+      const gender = req?.query?.gender;
+      const result = await productCollection
+        .find({ targetGender: gender })
+        .sort({ sold_count: -1 })
+        .toArray();
+
       res.send(result);
     });
 
@@ -115,11 +222,11 @@ async function run() {
       res.send(data);
     });
 
-    app.delete(`/cart/:id`,async(req,res)=>{
-        const id=req?.params?.id;
-        const result=await cartCollection.deleteOne({_id:new ObjectId(id)});
-        res.send(result);
-    })
+    app.delete(`/cart/:id`, async (req, res) => {
+      const id = req?.params?.id;
+      const result = await cartCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
 
     // Logout
     app.get("/logout", async (req, res) => {

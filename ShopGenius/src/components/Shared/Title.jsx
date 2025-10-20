@@ -1,8 +1,10 @@
-const Title = ({ title, textColor, borderColor, icon: ICON,iconColor }) => {
+const Title = ({ title, textColor, borderColor, icon: ICON, iconColor }) => {
   return (
-    <div className={`flex items-center gap-3 border-s-8 ${borderColor} ps-3`}>
+    <div
+      className={`flex items-center gap-3 border-s-8 ${borderColor} px-3 my-3`}
+    >
       <h2 className={`text-2xl font-bold ${textColor}`}>{title}</h2>
-      <ICON className={`${iconColor} text-xl`}/>
+      {ICON && <ICON className={`${iconColor} text-xl`} />}
     </div>
   );
 };

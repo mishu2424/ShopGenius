@@ -1,16 +1,21 @@
 import { FaCartShopping } from "react-icons/fa6";
 import logo from "../../assets/logo.png";
 import { IoIosSearch } from "react-icons/io";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import profile from "../../assets/placeholder.jpg";
 import useAuth from "../../hooks/useAuth";
 import useCart from "../../hooks/useCart";
 import LoadingSpinner from "../Shared/LoadingSpinner";
+import { useContext } from "react";
+import { ProductContext } from "../../contexts/ProductContext";
 const Navbar = ({ navbarRef }) => {
   const [searchFocused, setSearchFocused] = useState(false);
   const { user, logOut } = useAuth() || {};
   const [carts, isCartLoading] = useCart();
+  const navigate = useNavigate();
+  const { setSearchTxt, setCurrentPage, setCategory } =
+    useContext(ProductContext);
 
   // // Optional: lock scroll while dimmed
   // useEffect(() => {
@@ -21,6 +26,15 @@ const Navbar = ({ navbarRef }) => {
   //   }
   //   return () => (document.body.style.overflow = "");
   // }, [searchFocused]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // console.log(e.target.search.value);
+    setCategory("");
+    setSearchTxt(e.target.search.value);
+    setCurrentPage(1);
+    navigate("/products");
+  };
 
   if (isCartLoading) return <LoadingSpinner />;
   return (
@@ -59,12 +73,13 @@ const Navbar = ({ navbarRef }) => {
               <li>
                 <div className="flex gap-2">
                   <div>
-                    <form>
+                    <form onSubmit={handleSearch}>
                       <div className="flex items-center border border-gray-300 rounded-lg">
                         <input
                           type="text"
                           placeholder="Search"
                           className="input border-r-0 w-40"
+                          name="search"
                         />
                         <button type="submit">
                           <IoIosSearch
@@ -113,13 +128,17 @@ const Navbar = ({ navbarRef }) => {
           </Link>
         </div>
         <div className="flex gap-2">
-          <form className="hidden md:flex">
+          <form className="hidden md:flex" onSubmit={handleSearch}>
             <div className="flex items-center border border-gray-300 rounded-lg">
               <input
                 type="text"
+                name="search"
                 placeholder="Search"
                 onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
+                onBlur={() => {
+                  setSearchFocused(false);
+                  // setSearchTxt(e.target.value)
+                }}
                 className="
                   input w-24 md:w-96
                   rounded-none rounded-l-lg

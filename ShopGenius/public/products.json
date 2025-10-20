@@ -34,7 +34,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 120 },
+    "availability": { "available": true, "status": "in_stock", "stock": 120 },
     "rating": 4,
     "sold_count": 243,
     "popular": true,
@@ -84,7 +84,7 @@
         ]
       }
     ],
-    "availability": { "status": "low_stock", "stock": 12 },
+    "availability": { "available": true, "status": "low_stock", "stock": 12 },
     "rating": 4,
     "sold_count": 582,
     "popular": true,
@@ -129,7 +129,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 55 },
+    "availability": { "available": true, "status": "in_stock", "stock": 55 },
     "rating": 4,
     "sold_count": 154,
     "seller": {
@@ -162,7 +162,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 230 },
+    "availability": { "available": true, "status": "in_stock", "stock": 230 },
     "rating": 4,
     "sold_count": 970,
     "popular": true,
@@ -196,7 +196,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 48 },
+    "availability": { "available": true, "status": "in_stock", "stock": 48 },
     "rating": 4,
     "sold_count": 328,
     "seller": {
@@ -232,7 +232,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 30 },
+    "availability": { "available": true, "status": "in_stock", "stock": 30 },
     "rating": 4,
     "sold_count": 77,
     "seller": {
@@ -276,7 +276,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 80 },
+    "availability": { "available": true, "status": "in_stock", "stock": 80 },
     "rating": 4,
     "sold_count": 654,
     "popular": true,
@@ -318,16 +318,17 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 42 },
+    "availability": { "available": true, "status": "in_stock", "stock": 42 },
     "rating": 4,
-    "sold_count": 341,
-    "popular": true,
+    "sold_count": 0,
+    "popular": false,
     "seller": {
       "name": "Mishu Tishu",
       "email": "mishutishu755@gmail.com",
       "storeName": "TechGenius",
       "location": "Toronto, ON, Canada"
-    }
+    },
+    "new": true
   },
   {
     "productId": "SGH009",
@@ -355,7 +356,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 110 },
+    "availability": { "available": true, "status": "in_stock", "stock": 110 },
     "rating": 4,
     "sold_count": 1280,
     "popular": true,
@@ -364,7 +365,8 @@
       "email": "apurbodeymishu856@gmail.com",
       "storeName": "HomeEase Appliances",
       "location": "Kingston, ON, Canada"
-    }
+    },
+    "BestSeller": true
   },
   {
     "productId": "SGA010",
@@ -392,7 +394,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 63 },
+    "availability": { "available": true, "status": "in_stock", "stock": 63 },
     "rating": 4,
     "sold_count": 448,
     "popular": false,
@@ -426,7 +428,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 90 },
+    "availability": { "available": true, "status": "in_stock", "stock": 90 },
     "rating": 4,
     "sold_count": 874,
     "popular": true,
@@ -463,7 +465,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 44 },
+    "availability": { "available": true, "status": "in_stock", "stock": 44 },
     "rating": 4,
     "sold_count": 392,
     "popular": false,
@@ -472,7 +474,8 @@
       "email": "apurbodeymishu856@gmail.com",
       "storeName": "BrewSmart Appliances",
       "location": "Kingston, ON, Canada"
-    }
+    },
+    "new": true
   },
   {
     "productId": "SGC014",
@@ -505,7 +508,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 95 },
+    "availability": { "available": true, "status": "in_stock", "stock": 95 },
     "rating": 4,
     "sold_count": 690,
     "popular": true,
@@ -542,7 +545,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 300 },
+    "availability": { "available": true, "status": "in_stock", "stock": 300 },
     "rating": 4,
     "sold_count": 1220,
     "popular": true,
@@ -587,7 +590,7 @@
         ]
       }
     ],
-    "availability": { "status": "in_stock", "stock": 38 },
+    "availability": { "available": true, "status": "in_stock", "stock": 38 },
     "rating": 4,
     "sold_count": 222,
     "popular": false,

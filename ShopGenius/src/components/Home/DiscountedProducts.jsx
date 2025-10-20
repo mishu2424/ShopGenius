@@ -53,11 +53,19 @@ const DiscountedProducts = () => {
         },
       },
       {
-        breakpoint: 600,
+        breakpoint: 768,
         settings: {
-          slidesToShow: 2,
-          slidesToScroll: 2,
-          initialSlide: 2,
+          slidesToShow: 1,
+          slidesToScroll: 1,
+          initialSlide: 1,
+        },
+      },
+      {
+        breakpoint: 820,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+          initialSlide: 1,
         },
       },
       {
@@ -84,10 +92,13 @@ const DiscountedProducts = () => {
           <Slider {...settings}>
             {discountedProducts.map((product) => (
               <Link to={`/product/${product?._id}`} key={product.productId}>
-                <div className="max-w-xs rounded border border-transparent hover:border-purple-500 hover:scale-105 cursor-pointer duration-500 flex flex-col bg-white shadow-lg dark:bg-gray-800">
+                <div className="max-w-xs md:ml-4 lg:ml-0 mx-auto rounded border border-transparent hover:border-purple-500 hover:scale-105 cursor-pointer duration-500 flex flex-col bg-white shadow-lg dark:bg-gray-800">
                   {/* Title + Description */}
                   <div className="px-4 py-4">
-                    <h1 className="text-xl font-bold text-gray-800 uppercase dark:text-white">
+                    <h1
+                      className="text-xl font-bold text-gray-800 uppercase dark:text-white truncate"
+                      title={product?.title}
+                    >
                       {product?.title}
                     </h1>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 truncate">
