@@ -24,7 +24,6 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState(null);
   const [toggle, setToggle] = useState(false);
-  
 
   const createUser = (email, password) => {
     setLoading(true);
@@ -55,52 +54,72 @@ const AuthProvider = ({ children }) => {
   };
 
   const updateUserProfile = (name, photo) => {
+    console.log(name,photo);
     return updateProfile(auth.currentUser, {
       displayName: name,
       photoURL: photo,
     });
   };
   // Get token from server
-//   const getToken = async (email) => {
-//     const { data } = await axios.post(
-//       `${import.meta.env.VITE_API_URL}/jwt`,
-//       { email },
-//       { withCredentials: true }
-//     );
-//     return data;
-//   };
+  const getToken = async (email) => {
+    const { data } = await axios.post(
+      `${import.meta.env.VITE_API_URL}/jwt`,
+      { email },
+      { withCredentials: true }
+    );
+    return data;
+  };
 
-//   const saveUser = async (user) => {
-//     const newUser = {
-//       email: user?.email,
-//       name: user?.displayName,
-//       status: "Verified",
-//       role: "guest",
-//     };
+  const saveUser = async (user) => {
+    const newUser = {
+      email: user?.email,
+      name: user?.displayName,
+      status: "verified",
+      role: "user",
+    };
 
-//     try {
-//       await axios.put(`${import.meta.env.VITE_API_URL}/users`, newUser);
-//     } catch (err) {
-//       toast.error(
-//         "Something went wrong while saving the user information.",
-//         err.message
-//       );
-//     }
-//   };
+    try {
+      await axios.put(`${import.meta.env.VITE_API_URL}/users`, newUser);
+    } catch (err) {
+      toast.error(
+        "Something went wrong while saving the user information.",
+        err.message
+      );
+    }
+  };
 
   // onAuthStateChange
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        // getToken(currentUser?.email);
-        // saveUser(currentUser);
+
+      try {
+        if (!currentUser) {
+          setLoading(false);
+          return;
+        }
+
+        // If sign-in provider is NOT password (e.g., Google), we can trust it.
+        const providerId =
+          currentUser.providerData?.[0]?.providerId || "password";
+        const isTrustedProvider = providerId !== "password";
+
+        if (currentUser.emailVerified || isTrustedProvider) {
+          await getToken(currentUser.email); // sets your HTTP-only cookie
+          await saveUser(currentUser); // upsert in DB
+        } else {
+          // Safety net: users who somehow sneak in are immediately signed out
+          toast("Please verify your email first", {
+            duration: 3000,
+          });
+          await signOut(auth);
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
-    return () => {
-      return unsubscribe();
-    };
+
+    return () => unsubscribe();
   }, []);
 
   const authInfo = {
@@ -116,7 +135,7 @@ const AuthProvider = ({ children }) => {
     theme,
     setTheme,
     toggle,
-    setToggle
+    setToggle,
   };
 
   return (

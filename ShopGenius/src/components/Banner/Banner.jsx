@@ -48,12 +48,12 @@ const Banner = () => {
       <div className="max-w-[2000px] mx-auto xl:px-20 md:px-10 sm:px-2 px-4 relative -top-20 z-30">
         <div className="flex flex-col md:flex-row items-center justify-center gap-5">
           {carts.length > 0 && (
-            <div className="w-[350px] h-[400px] border border-transparent rounded-md shadow-2xl bg-white">
+            <div className="w-[350px] h-[350px] border border-transparent rounded-md shadow-2xl bg-white">
               <BannerCard items={carts} message="carts"/>
             </div>
           )}
           {popularProducts.length > 0 && (
-            <div className="w-[350px] h-[400px] border border-transparent rounded-md shadow-2xl bg-white">
+            <div className="w-[350px] h-[350px] border border-transparent rounded-md shadow-2xl bg-white">
               <BannerCard items={popularProducts} message="popular"/>
             </div>
           )}

@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 
 const Login = () => {
   const [passwordToggle, setPasswordToggle] = useState(false);
-  const { signInWithGoogle, signIn } = useAuth();
+  const { signInWithGoogle, signIn, logOut } = useAuth();
   const [userSignUpLoading, setUserSignUpLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [resetEmail, setEmail] = useState("");
@@ -38,14 +38,21 @@ const Login = () => {
     const form = new FormData(e.target);
     const email = form.get("email");
     const password = form.get("password");
-    console.log(email,password);
+    // console.log(email, password);
     try {
       setUserSignUpLoading(true);
 
-      await signIn(email, password);
-      toast.success("Signed in successfully!");
+      const result = await signIn(email, password);
+      if (!result.user.emailVerified) {
+        await logOut(); // make sure they’re logged out
+        const err = new Error("EMAIL_NOT_VERIFIED");
+        err.code = "EMAIL_NOT_VERIFIED";
+        throw err;
+      } else {
+        toast.success("Signed in successfully!");
+        return navigate(from);
+      }
       // console.log("came this far");
-      navigate(from);
     } catch (err) {
       toast.error(err.message);
     } finally {

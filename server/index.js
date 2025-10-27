@@ -3,6 +3,7 @@ const app = express();
 require("dotenv").config();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 
@@ -22,7 +23,7 @@ app.use(cookieParser());
 // Verify Token Middleware
 const verifyToken = async (req, res, next) => {
   const token = req.cookies?.token;
-  console.log(token);
+  // console.log(token);
   if (!token) {
     return res.status(401).send({ message: "unauthorized access" });
   }
@@ -52,6 +53,9 @@ async function run() {
       .collection("products");
     const cartCollection = client.db("Shop-Genius-db").collection("cart");
     const userCollection = client.db("Shop-Genius-db").collection("users");
+    const bookingCollection = client
+      .db("Shop-Genius-db")
+      .collection("bookings");
 
     // auth related api
     app.post("/jwt", async (req, res) => {
@@ -67,6 +71,26 @@ async function run() {
         })
         .send({ success: true });
     });
+
+    const verifyAdmin = async (req, res, next) => {
+      const user = req?.user;
+      const query = { email: user?.email };
+      const result = await userCollection.findOne(query);
+      if (!result || result.role !== "admin") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+
+    const verifySeller = async (req, res, next) => {
+      const user = req?.user;
+      const query = { email: user?.email };
+      const result = await userCollection.findOne(query);
+      if (!result || result.role !== "seller") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
 
     // products
     app.get("/products", async (req, res) => {
@@ -116,9 +140,13 @@ async function run() {
       } else if (sort === "desc-r") {
         options = { "rating.score": "-1" };
       }
-
+      console.log(categoryName);
       if (categoryName) {
+        // if (categoryName === "all") {
+        //   query = {};
+        // } else {
         query = { ...query, category: categoryName };
+        // }
       }
 
       const result = await productCollection
@@ -175,6 +203,90 @@ async function run() {
       res.send(result);
     });
 
+    app.post(`/products`, async (req, res) => {
+      const product = req?.body;
+      const result = await productCollection.insertOne(product);
+      res.send(result);
+    });
+
+    app.patch(`/update-product-sold-count/:id`, async (req, res) => {
+      const id = req?.params?.id;
+      const { sold_count } = req?.body;
+      const updatedDoc = {
+        $set: {
+          sold_count,
+        },
+      };
+      const result = await productCollection.updateOne(
+        { _id: new ObjectId(id) },
+        updatedDoc
+      );
+      res.send(result);
+    });
+
+    // payments
+    app.post("/create-payment-intent", async (req, res) => {
+      const price = req?.body?.total;
+      // console.log('price',price);
+      //stripe accepts price in cents which is why converted it into cents by multiplying it with 100;
+      const priceInCent = parseFloat(price) * 100;
+      if (!price || priceInCent < 1) return;
+
+      // generate a client secret key
+
+      // console.log(priceInCent);
+      const { client_secret } = await stripe.paymentIntents.create({
+        amount: priceInCent,
+        currency: "cad",
+        // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      // send it to client
+      res.send({ clientSecret: client_secret });
+    });
+
+    // booking
+    app.post("/booking", verifyToken, async (req, res) => {
+      const booking = req?.body;
+      // console.log(booking);
+
+      if (booking?.source) {
+        if (booking?.source === "Product-details") {
+          const isExistInCart = await cartCollection.findOne({
+            _id: new ObjectId(booking?.productBookingId),
+          });
+          // console.log("productfound", isExistInCart);
+          if (isExistInCart) {
+            await cartCollection.deleteOne({
+              _id: new ObjectId(booking?.productBookingId),
+            });
+          }
+          delete booking?.source;
+        }
+      } else {
+        const isExistInCart = await cartCollection.findOne({
+          productBookingId: booking?.productBookingId,
+        });
+        // console.log("productfound", isExistInCart);
+        if (isExistInCart) {
+          await cartCollection.deleteOne({
+            productBookingId: booking?.productBookingId,
+          });
+        }
+      }
+
+      // sendEmail(booking?.guest?.email, {
+      //   subject: "Congratulations!",
+      //   message: `You have successfully booked the room ${booking?.guest?.name}!Transaction id:${booking?.transactionId}`,
+      // });
+
+      const result = await bookingCollection.insertOne(booking);
+      res.send(result);
+    });
+
     // popular products
     app.get(`/popular-products`, async (req, res) => {
       const result = await productCollection.find({ popular: true }).toArray();
@@ -225,6 +337,141 @@ async function run() {
     app.delete(`/cart/:id`, async (req, res) => {
       const id = req?.params?.id;
       const result = await cartCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
+    // Users
+    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/user/:email", async (req, res) => {
+      const email = req?.params?.email;
+      // console.log('role',email);
+      const result = await userCollection.findOne({ email });
+      res.send(result);
+    });
+
+    app.put(`/users`, async (req, res) => {
+      const user = req?.body;
+      const query = { email: user?.email };
+      const options = { upsert: true };
+      const userFound = await userCollection.findOne(query);
+      if (userFound) {
+        if (user?.status === "requested") {
+          const updateUser = await userCollection.updateOne(query, {
+            $set: { status: user?.status },
+          });
+          return res.send(updateUser);
+        } else {
+          return res.send(userFound);
+        }
+      }
+
+      const updatedDoc = {
+        $set: {
+          ...user,
+          timeStamp: Date.now(),
+        },
+      };
+
+      const result = await userCollection.updateOne(query, updatedDoc, options);
+
+      return res.send(result);
+    });
+
+    // dashboard
+    // users dashboard
+    app.get(`/my-orders/:email`, async (req, res) => {
+      const email = req?.params?.email;
+      console.log(req?.params);
+      const result = await bookingCollection
+        .find({ "user.email": email })
+        .toArray();
+      res.send(result);
+    });
+
+    app.delete(`/cancel-order/:id`, async (req, res) => {
+      const id = req?.params?.id;
+      const result = await bookingCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    // seller dashboard
+    app.get(`/my-products/:email`, async (req, res) => {
+      const email = req?.params?.email;
+      const result = await productCollection
+        .find({ "seller.email": email })
+        .toArray();
+      res.send(result);
+    });
+
+    app.patch(`/update-product/:id`, async (req, res) => {
+      const id = req?.params?.id;
+      const product = req?.body;
+      const updatedDoc = {
+        $set: {
+          ...product,
+          timeStamp: Date.now(),
+        },
+      };
+      const result = await productCollection.updateOne(
+        { _id: new ObjectId(id) },
+        updatedDoc
+      );
+      res.send(result);
+    });
+
+    app.delete(`/delete-room/:id`, async (req, res) => {
+      const { reason } = req?.query;
+      const id = req?.params?.id;
+      const result = await productCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      return result;
+    });
+
+    app.get(`/manage-orders/:email`, async (req, res) => {
+      const email = req?.params?.email;
+      const result = await bookingCollection
+        .find({ "seller.email": email })
+        .toArray();
+      res.send(result);
+    });
+
+    app.patch(`/update-delivery-status/:id`, async (req, res) => {
+      const id = req?.params?.id;
+      const { deliveryStatus } = req?.body;
+      const updatedDoc = {
+        $set: {
+          deliveryStatus,
+          lastUpdatedTime: Date.now(),
+        },
+      };
+      const result = await bookingCollection.updateOne(
+        { _id: new ObjectId(id) },
+        updatedDoc
+      );
+      res.send(result);
+    });
+
+    // admin dashboard
+    app.patch("/update-user-role/:email", async (req, res) => {
+      const email = req?.params?.email;
+      const { selectedRole } = req?.body;
+      const query = { email };
+      const updatedDoc = {
+        $set: {
+          role: selectedRole,
+          status: "verified",
+          timeStamp: Date.now(),
+        },
+      };
+
+      const result = await userCollection.updateOne(query, updatedDoc);
       res.send(result);
     });
 

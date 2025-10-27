@@ -8,6 +8,19 @@ import SignUp from "../pages/Authentication/SignUp";
 import Carts from "../pages/Carts/Carts";
 import PrivateRoute from "./PrivateRoute";
 import Products from "../pages/Products/Products";
+import DashboardLayout from "../layouts/DashboardLayout";
+import Profile from "../components/Dashboard/Shared/Profile";
+import MyOrders from "../pages/Dashboard/User/MyOrders";
+import UserStatistics from "../pages/Dashboard/User/UserStatistics";
+import SellerStatistics from "../pages/Dashboard/Seller/SellerStatistics";
+import MyProducts from "../pages/Dashboard/Seller/MyProducts";
+import ManageOrders from "../pages/Dashboard/Seller/ManageOrders";
+import ManageUsers from "../pages/Dashboard/Admin/ManageUsers";
+import AddProducts from "../pages/Dashboard/Seller/AddProducts";
+import SellerRoute from "./SellerRoute";
+import AdminRoute from "./AdminRoute";
+import AdminStatistics from "../pages/Dashboard/Admin/AdminStatistics";
+import MyCarts from "../pages/Dashboard/User/MyCarts";
 
 export const router = createBrowserRouter([
   {
@@ -32,9 +45,9 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path:`/products`,
-        element:<Products/>
-      }
+        path: `/products`,
+        element: <Products />,
+      },
     ],
   },
   {
@@ -44,5 +57,122 @@ export const router = createBrowserRouter([
   {
     path: "signup",
     element: <SignUp />,
+  },
+  {
+    path: "dashboard",
+    element: (
+      <PrivateRoute>
+        <DashboardLayout />
+      </PrivateRoute>
+    ),
+    children: [
+      // user-dashboard
+      {
+        index: true,
+        element: (
+          <PrivateRoute>
+            <Profile></Profile>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "my-orders",
+        element: (
+          <PrivateRoute>
+            <MyOrders />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "my-carts",
+        element: (
+          <PrivateRoute>
+            <MyCarts />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "user-stats",
+        element: (
+          <PrivateRoute>
+            <UserStatistics />
+          </PrivateRoute>
+        ),
+      },
+
+      // Seller
+      {
+        path: "seller-stats",
+        element: (
+          <PrivateRoute>
+            <SellerRoute>
+              <SellerStatistics />
+            </SellerRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "add-products",
+        element: (
+          <PrivateRoute>
+            <SellerRoute>
+              <AddProducts />
+            </SellerRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "my-products",
+        element: (
+          <PrivateRoute>
+            <SellerRoute>
+              <MyProducts />
+            </SellerRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "manage-orders",
+        element: (
+          <PrivateRoute>
+            <SellerRoute>
+              <ManageOrders />
+            </SellerRoute>
+          </PrivateRoute>
+        ),
+      },
+
+      // admin
+      {
+        path: "admin-stats",
+        element: (
+          <PrivateRoute>
+            <AdminRoute>
+              <AdminStatistics />
+            </AdminRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "manage-users",
+        element: (
+          <PrivateRoute>
+            <AdminRoute>
+              <ManageUsers />
+            </AdminRoute>
+          </PrivateRoute>
+        ),
+      },
+
+      // shared_components
+      {
+        path: "profile",
+        element: (
+          <PrivateRoute>
+            <Profile />
+          </PrivateRoute>
+        ),
+      },
+    ],
   },
 ]);

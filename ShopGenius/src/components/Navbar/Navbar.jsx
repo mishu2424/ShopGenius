@@ -14,7 +14,7 @@ const Navbar = ({ navbarRef }) => {
   const { user, logOut } = useAuth() || {};
   const [carts, isCartLoading] = useCart();
   const navigate = useNavigate();
-  const { setSearchTxt, setCurrentPage, setCategory } =
+  const { searchTxt, setSearchTxt, setCurrentPage, setCategory } =
     useContext(ProductContext);
 
   // // Optional: lock scroll while dimmed
@@ -77,9 +77,14 @@ const Navbar = ({ navbarRef }) => {
                       <div className="flex items-center border border-gray-300 rounded-lg">
                         <input
                           type="text"
-                          placeholder="Search"
+                          defaultValue={searchTxt}
                           className="input border-r-0 w-40"
                           name="search"
+                          onFocus={() => setSearchFocused(true)}
+                          onBlur={() => {
+                            setSearchFocused(false);
+                            // setSearchTxt(e.target.value)
+                          }}
                         />
                         <button type="submit">
                           <IoIosSearch
@@ -109,10 +114,10 @@ const Navbar = ({ navbarRef }) => {
                       className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow"
                     >
                       <li>
-                        <a className="justify-between">Profile</a>
+                        <Link to={`/dashboard/profile`}>Profile</Link>
                       </li>
                       <li>
-                        <a>Dashboard</a>
+                        <Link to={`/dashboard`}>Dashboard</Link>
                       </li>
                       <li>
                         <Link to={`login`}>Log in</Link>
@@ -133,7 +138,7 @@ const Navbar = ({ navbarRef }) => {
               <input
                 type="text"
                 name="search"
-                placeholder="Search"
+                defaultValue={searchTxt}
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => {
                   setSearchFocused(false);
@@ -177,10 +182,10 @@ const Navbar = ({ navbarRef }) => {
               className="menu menu-sm dropdown-content bg-[#2c3641] text-white rounded-box z-[1] mt-12 w-52 p-2 shadow"
             >
               <li>
-                <a className="justify-between">Profile</a>
+                <Link to={`/dashboard/profile`}>Profile</Link>
               </li>
               <li>
-                <a>Dashboard</a>
+                <Link to={`/dashboard`}>Dashboard</Link>
               </li>
               <li>
                 {user ? (

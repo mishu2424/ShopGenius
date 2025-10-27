@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import useAxiosCommon from "../../hooks/useAxiosCommon";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import { FaMinus, FaPlus } from "react-icons/fa6";
@@ -9,16 +9,31 @@ import useAxiosSecure from "../../hooks/useAxiosSecure";
 import toast from "react-hot-toast";
 import useCart from "../../hooks/useCart";
 import { Helmet } from "react-helmet-async";
+import BookingModal from "../Modal/BookingModal";
 
 const ProductDetails = () => {
   const axiosCommon = useAxiosCommon();
   const axiosSecure = useAxiosSecure();
+  const { user } = useAuth() || {};
   const navigate = useNavigate();
   const [, , refetch] = useCart();
   const { id } = useParams();
-  const { user } = useAuth();
+  const location = useLocation();
 
-  const { data: product, isLoading } = useQuery({
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const openModal = () => {
+    if (!user?.email) {
+      // redirect to login and remember where user came from
+      navigate("/login", { replace: true, state: { from: location } });
+      return;
+    }
+    setIsBookingModalOpen(true);
+  };
+  const closeBookingModal = () => {
+    setIsBookingModalOpen(false);
+  };
+
+  const { data: product, isLoading, refetch:productDataRefech } = useQuery({
     queryKey: ["product-details", id],
     queryFn: async () => {
       const { data } = await axiosCommon(`/product/details/${id}`);
@@ -41,10 +56,21 @@ const ProductDetails = () => {
   const images = selectedColor?.image ?? [];
   const currentImg = images?.[imageIndex] ?? images?.[0];
 
-  let priceNow =
-    product?.discount?.active && product?.salePrice
-      ? product.salePrice
-      : product?.price;
+  // price for ONE unit “right now”
+  const priceNow = useMemo(() => {
+    if (!product) return 0;
+    return product?.discount?.active && product?.salePrice
+      ? Number(product.salePrice)
+      : Number(product?.price || 0);
+  }, [product]);
+
+  // total = unit * quantity
+  const totalPrice = useMemo(
+    () => Number((priceNow * quantity).toFixed(2)),
+    [priceNow, quantity]
+  );
+
+  console.log(totalPrice, quantity);
 
   const { mutateAsync: cartMutateAsync } = useMutation({
     mutationKey: ["user-cart"],
@@ -58,25 +84,41 @@ const ProductDetails = () => {
   });
 
   const handleAddToCart = async () => {
+    console.log(totalPrice);
     if (user && user?.email) {
+      if(user?.email===product?.seller?.email){
+        return toast.error("You can not save your own product in the cart")
+      }
       const cart = {
-        productId: product?._id,
-        orderQuantity: quantity,
-        img: currentImg,
-        title: product?.title,
-        brand: product?.brand,
-        description: product?.description,
-        category: product?.category,
-        price: Number(priceNow * quantity),
-        rating: product?.rating,
-        discount: product?.discount,
-        availability: product?.availability,
-        seller: product?.seller,
+        ...product,
+        source:"Product-details",
+        productBookingId: product?._id,
+        selectedColor: selectedColor?.name,
+        selectedImage: currentImg,
+        quantity,
+        totalPrice,
         userInfo: {
           name: user?.displayName || "unknown",
           email: user?.email,
         },
+        // productId: product?._id,
+        // orderQuantity: quantity,
+        // img: currentImg,
+        // title: product?.title,
+        // brand: product?.brand,
+        // description: product?.description,
+        // category: product?.category,
+        // price: Number(priceNow * quantity),
+        // rating: product?.rating,
+        // discount: product?.discount,
+        // availability: product?.availability,
+        // seller: product?.seller,
+        // userInfo: {
+        //   name: user?.displayName || "unknown",
+        //   email: user?.email,
+        // },
       };
+      delete cart?._id;
       try {
         const data = await cartMutateAsync(cart);
         if (data.insertedId) {
@@ -146,7 +188,7 @@ const ProductDetails = () => {
               {currentImg ? (
                 <img
                   src={currentImg}
-                  alt={product.title}
+                  alt={product?.title}
                   className="max-h-[520px] w-full object-contain"
                 />
               ) : (
@@ -203,7 +245,7 @@ const ProductDetails = () => {
               {product?.discount?.active && product.salePrice ? (
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-semibold text-[#B12704]">
-                    ${Number((priceNow * quantity).toFixed(2))}
+                    {fmt.format(totalPrice)}
                   </span>
                   <span className="text-sm line-through text-gray-500">
                     {fmt.format(product.price)}
@@ -215,7 +257,9 @@ const ProductDetails = () => {
               ) : (
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-semibold text-gray-900">
-                    {fmt.format(priceNow)}
+                    <span className="text-3xl font-semibold text-gray-900">
+                      {fmt.format(totalPrice)}
+                    </span>
                   </span>
                   <span className="text-xs text-gray-500">({currency})</span>
                 </div>
@@ -315,9 +359,24 @@ const ProductDetails = () => {
               >
                 Add to Cart
               </button>
-              <button className="btn cursor-pointer col-span-2 sm:col-span-1 rounded-full bg-[#2381D3] hover:bg-blue-700 text-white font-medium px-6 py-3 transition shadow">
+              <button
+                onClick={openModal}
+                className="btn cursor-pointer col-span-2 sm:col-span-1 rounded-full bg-[#2381D3] hover:bg-blue-700 text-white font-medium px-6 py-3 transition shadow"
+              >
                 Buy Now
               </button>
+              <BookingModal
+                closeModal={closeBookingModal}
+                isOpen={isBookingModalOpen}
+                bookingInfo={{
+                  ...product,
+                  selectedColor: selectedColor?.name,
+                  selectedImage: currentImg,
+                  quantity,
+                  totalPrice,
+                }}
+                refetch={productDataRefech}
+              />
             </div>
 
             {/* Meta */}

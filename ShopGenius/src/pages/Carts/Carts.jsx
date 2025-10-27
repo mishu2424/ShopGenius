@@ -9,12 +9,19 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
+import BookingModal from "../../components/Modal/BookingModal";
+import CheckOutModal from "../../components/Modal/CheckOutModal";
 
 const Carts = () => {
   const axiosSecure = useAxiosSecure();
   const navigate = useNavigate();
   const [carts, isCartLoading, refetch] = useCart();
   const [cartsData, setCartsData] = useState([]);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+
+  const closeBookingModal = () => {
+    setIsBookingModalOpen(false);
+  };
 
   useEffect(() => {
     if (carts) setCartsData(carts);
@@ -32,6 +39,7 @@ const Carts = () => {
       navigate(`/carts`);
     },
   });
+  console.log([...carts]);
 
   const handleRemove = async (id) => {
     try {
@@ -65,14 +73,14 @@ const Carts = () => {
 
   // ✅ total updates dynamically based on cartsData
   const total = cartsData.reduce(
-    (sum, item) => sum + (item?.price || 0) * (item?.orderQuantity || 1),
+    (sum, item) => sum + (item?.totalPrice || 0) * (item?.orderQuantity || 1),
     0
   );
 
   return (
     <>
       <Helmet>
-        <title>ShopGenius | Carts</title>
+        <title>Carts | ShopGenius</title>
       </Helmet>
       <div className="max-w-6xl mx-auto p-6">
         <Title
@@ -105,9 +113,16 @@ const Carts = () => {
             <p className="text-2xl font-bold text-[#B12704]">
               ${Number(total.toFixed(2))}
             </p>
-            <button className="mt-4 w-full bg-[#FFD814] hover:bg-[#F7CA00] text-gray-900 font-semibold py-2 rounded-md transition">
+            <button onClick={()=>setIsBookingModalOpen(true)} className="cursor-pointer mt-4 w-full bg-[#FFD814] hover:bg-[#F7CA00] text-gray-900 font-semibold py-2 rounded-md transition">
               Proceed to Checkout
             </button>
+            <CheckOutModal
+              closeModal={closeBookingModal}
+              isOpen={isBookingModalOpen}
+              bookingInfo={[...carts]}
+              refetch={refetch}
+              totalPrice={total}
+            />
           </div>
         </div>
       </div>

@@ -6,9 +6,12 @@ import { Outlet } from "react-router-dom";
 import { useState } from "react";
 import { useEffect } from "react";
 import SplashScreen from "../components/Shared/SplashScreen";
+import useMyLocation from "../hooks/useMyLocation";
 
 const Main = () => {
   const navbarRef = useRef();
+  const { location, error, getLocation } = useMyLocation();
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,6 +24,9 @@ const Main = () => {
   if (loading) {
     return <SplashScreen />; // ⏳ Show logo until promise resolves
   }
+
+  if(!location) return getLocation();
+  console.log(location);
   return (
     <div className="font-roboto">
       <Navbar navbarRef={navbarRef} />

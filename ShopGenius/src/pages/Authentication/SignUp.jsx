@@ -8,13 +8,14 @@ import logo from "../../assets/logo.png";
 import useAuth from "../../hooks/useAuth";
 import toast from "react-hot-toast";
 import { ImageBBUpload } from "../../api/utilities";
+import { sendEmailVerification } from "firebase/auth";
 
 const SignUp = () => {
   const [passwordToggle, setPasswordToggle] = useState(false);
   const [userSignInLoading, setUserSignInLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [passError, setPassError] = useState(false);
-  const { signInWithGoogle, createUser, updateUserProfile } = useAuth();
+  const { signInWithGoogle, createUser, updateUserProfile, logOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
@@ -52,9 +53,18 @@ const SignUp = () => {
       if (password !== confirmPassword)
         return toast.error("Passwords did not match!");
       const img = await ImageBBUpload(photoURL);
-      await createUser(email, password);
+      const result = await createUser(email, password);
       await updateUserProfile(name, img);
-      toast.success("Signed up successfully!");
+      // If they used email/password and haven't verified, stop here
+      if (!result.user.emailVerified) {
+        await sendEmailVerification(result.user); // optional: resend
+        await logOut(); // make sure they’re logged out
+        toast.success(
+          "Verification email sent! Please verify before logging in."
+        );
+        return navigate("/login");
+      }
+
       navigate(from);
     } catch (err) {
       toast.error(err.message);
@@ -245,7 +255,11 @@ const SignUp = () => {
                 type="submit"
                 className="w-full px-6 py-3 text-sm font-medium tracking-wide text-white capitalize transition-colors duration-300 transform bg-[#1C74C1] cursor-pointer rounded-lg hover:bg-gray-700 focus:outline-none focus:ring focus:ring-gray-300 focus:ring-opacity-50"
               >
-                {userSignInLoading ? <FaSpinner className="animate-spin m-auto"/>:'Sign up'}
+                {userSignInLoading ? (
+                  <FaSpinner className="animate-spin m-auto" />
+                ) : (
+                  "Sign up"
+                )}
               </button>
             </div>
           </form>

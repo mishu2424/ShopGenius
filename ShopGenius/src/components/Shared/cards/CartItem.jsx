@@ -4,7 +4,7 @@ import { FaMinus, FaPlus } from "react-icons/fa6";
 import { Link } from "react-router-dom";
 
 const CartItem = ({ item, handleRemove, onQuantityChange }) => {
-  const [quantity, setQuantity] = useState(item?.orderQuantity);
+  const [quantity, setQuantity] = useState(item?.quantity);
 
   const handleQtyChange = (newQty) => {
     if (newQty < 1) return;
@@ -16,7 +16,7 @@ const CartItem = ({ item, handleRemove, onQuantityChange }) => {
       {/* Product Image */}
       <div className="flex-shrink-0 w-full md:w-40 h-40 bg-gray-50  rounded flex items-center justify-center overflow-hidden">
         <img
-          src={item?.img}
+          src={item?.selectedImage}
           alt={item?.title}
           className="object-contain w-full h-full"
         />
@@ -78,7 +78,7 @@ const CartItem = ({ item, handleRemove, onQuantityChange }) => {
           </button>
 
           <div className="text-lg font-semibold text-gray-900">
-            ${item?.price?.toFixed(2)}
+            ${item?.totalPrice?.toFixed(2)}
           </div>
         </div>
       </div>

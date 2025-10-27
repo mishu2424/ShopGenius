@@ -6,6 +6,7 @@ const ProductSearchProvider = ({ children }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [category, setCategory] = useState("");
   const [sortText, setSortText] = useState("");
+  // console.log(searchTxt);
 
   const searchInfo = {
     searchTxt,

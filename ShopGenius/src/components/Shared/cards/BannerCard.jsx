@@ -9,7 +9,7 @@ const BannerCard = ({ items, message }) => {
         ? items.slice(0, 4).map((item) => (
             <div
               key={item?._id}
-              className="flex items-center justify-center flex-wrap py-5"
+              className="flex items-center justify-center flex-wrap py-2"
             >
               <Link
                 to={

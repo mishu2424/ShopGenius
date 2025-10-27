@@ -92,11 +92,11 @@ export default function Products() {
   const pages = [...Array(totalPages).keys()].map((i) => i + 1);
 
   if (isLoading) return <LoadingSpinner />;
-  console.log(products);
+  // console.log(products);
   return (
     <>
       <Helmet>
-        <title>ShopGenius | Products</title>
+        <title>Products | ShopGenius</title>
       </Helmet>
       {!sortText && (
         <Title title={"All Products"} borderColor={"border-blue-500"} />
@@ -120,8 +120,8 @@ export default function Products() {
                         checked={category === value}
                         onChange={() => {
                           setCurrentPage(1);
-                          setCategory(value);
                           setSearchTxt(""); // optional: clear search when picking category
+                          setCategory(value);
                         }}
                         className="radio radio-sm"
                       />
