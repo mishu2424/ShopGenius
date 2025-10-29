@@ -113,14 +113,22 @@ const Navbar = ({ navbarRef }) => {
                       tabIndex="-1"
                       className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow"
                     >
+                      {user && user?.email && (
+                        <li>
+                          <Link to={`/dashboard/profile`}>Profile</Link>
+                        </li>
+                      )}
+                      {user && user?.email && (
+                        <li>
+                          <Link to={`/dashboard`}>Dashboard</Link>
+                        </li>
+                      )}
                       <li>
-                        <Link to={`/dashboard/profile`}>Profile</Link>
-                      </li>
-                      <li>
-                        <Link to={`/dashboard`}>Dashboard</Link>
-                      </li>
-                      <li>
-                        <Link to={`login`}>Log in</Link>
+                        {user && user?.email ? (
+                          <span onClick={logOut}>Log out</span>
+                        ) : (
+                          <Link to={`login`}>Log in</Link>
+                        )}
                       </li>
                     </ul>
                   </div>
@@ -181,12 +189,16 @@ const Navbar = ({ navbarRef }) => {
               tabIndex="-1"
               className="menu menu-sm dropdown-content bg-[#2c3641] text-white rounded-box z-[1] mt-12 w-52 p-2 shadow"
             >
-              <li>
-                <Link to={`/dashboard/profile`}>Profile</Link>
-              </li>
-              <li>
-                <Link to={`/dashboard`}>Dashboard</Link>
-              </li>
+              {user && user?.email && (
+                <li>
+                  <Link to={`/dashboard/profile`}>Profile</Link>
+                </li>
+              )}
+              {user && user?.email && (
+                <li>
+                  <Link to={`/dashboard`}>Dashboard</Link>
+                </li>
+              )}
               <li>
                 {user ? (
                   <span onClick={logOut}>Log out</span>

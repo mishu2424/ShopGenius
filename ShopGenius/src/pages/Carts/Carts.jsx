@@ -7,10 +7,12 @@ import useCart from "../../hooks/useCart";
 import { CiShoppingCart } from "react-icons/ci";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import BookingModal from "../../components/Modal/BookingModal";
 import CheckOutModal from "../../components/Modal/CheckOutModal";
+import { axiosCommon } from "../../hooks/useAxiosCommon";
+import { FaSpinner } from "react-icons/fa";
 
 const Carts = () => {
   const axiosSecure = useAxiosSecure();
@@ -18,6 +20,7 @@ const Carts = () => {
   const [carts, isCartLoading, refetch] = useCart();
   const [cartsData, setCartsData] = useState([]);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   const closeBookingModal = () => {
     setIsBookingModalOpen(false);
@@ -31,7 +34,7 @@ const Carts = () => {
   const { mutateAsync: deleteCartAsync } = useMutation({
     mutationKey: ["cart-delete"],
     mutationFn: async (id) => {
-      const { data } = await axiosSecure.delete(`/cart/${id}`);
+      const { data } = await axiosCommon.delete(`/cart/${id}`);
       return data;
     },
     onSuccess: () => {
@@ -61,6 +64,104 @@ const Carts = () => {
     );
   };
 
+  // ✅ total updates dynamically based on cartsData
+  const total = cartsData.reduce(
+    (sum, item) => sum + (item?.totalPrice || 0) * (item?.orderQuantity || 1),
+    0
+  );
+
+  const totalItems = useMemo(
+    () =>
+      cartsData.reduce(
+        (sum, item) => sum + (item?.orderQuantity ?? item?.quantity ?? 1),
+        0
+      ),
+    [cartsData]
+  );
+
+  // checkout-payment
+  const { mutateAsync: paymentAsync } = useMutation({
+    mutationKey: ["checkout-payment"],
+    mutationFn: async (items) => {
+      const { data } = await axiosSecure.post(`/create-checkout-session`, {
+        items,
+      });
+      return data;
+    },
+    onSuccess: () => {
+      setProcessing(false);
+    },
+    onError: () => {
+      setProcessing(false);
+    },
+  });
+
+  const checkOutPayment = async () => {
+    setProcessing(true);
+    try {
+      // const availableItems = carts.filter((cart) => {
+      //   console.log(cart?.availability?.available, cart?.availability?.status);
+      //   return (
+      //     cart?.availability?.available &&
+      //     cart?.availability?.status !== "Out of Stock" &&
+      //     cart?.availability.stock > cart?.availability?.quantity
+      //   );
+      // });
+      // console.log(availableItems);
+      const sortedCartItems = carts
+        .filter((cart) => {
+          console.log(
+            cart?.availability?.available,
+            cart?.availability?.status,
+            cart?.availability.stock > cart?.quantity
+          );
+          if (!cart?.availability?.available) {
+            toast.error(
+              `You can not buy ${cart?.title} as it is either out of stock or not available at this moment! Remove this from before proceeding to checkout`
+            );
+            setProcessing(false);
+            return;
+          }
+          if (cart?.availability?.stock < cart?.quantity) {
+            toast.error(
+              `You can not buy ${cart?.quantity} items as only ${cart?.availability?.stock} items are available in stock right now!`
+            );
+            setProcessing(false);
+            return;
+          }
+          // console.log('came here');
+          return (
+            cart?.availability?.available &&
+            cart?.availability?.status !== "Out of Stock" &&
+            cart?.availability.stock > cart?.quantity
+          );
+        })
+        .map((item) => {
+          return {
+            // cartLineId: item._id, // your internal cart line id
+            productBookingId: item.productBookingId,
+            title: item.title,
+            brand: item.brand,
+            category: item.category,
+            selectedImage: item.selectedImage,
+            sold_count: item.sold_count,
+            selectedColor: item.selectedColor,
+            quantity: item?.quantity,
+            price: item?.totalPrice, // what Stripe expects per item
+            currency: item.currency ?? "CAD",
+            seller: item.seller, // optional meta you may pass along
+            user: item.userInfo,
+          };
+        });
+      console.log(sortedCartItems);
+      const data = await paymentAsync(sortedCartItems);
+      // console.log(data.url);
+      window.location.href = data?.url;
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
   if (isCartLoading) return <LoadingSpinner />;
 
   if (!carts || carts.length === 0) {
@@ -70,12 +171,6 @@ const Carts = () => {
       </div>
     );
   }
-
-  // ✅ total updates dynamically based on cartsData
-  const total = cartsData.reduce(
-    (sum, item) => sum + (item?.totalPrice || 0) * (item?.orderQuantity || 1),
-    0
-  );
 
   return (
     <>
@@ -107,22 +202,30 @@ const Carts = () => {
           {/* Right: Summary */}
           <div className="bg-gray-50 border rounded-md p-4 h-fit">
             <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-            <p className="text-gray-700 mb-1">
-              Subtotal ({carts.length} items):
-            </p>
+            <p className="text-gray-700 mb-1">Subtotal ({totalItems} items):</p>
             <p className="text-2xl font-bold text-[#B12704]">
               ${Number(total.toFixed(2))}
             </p>
-            <button onClick={()=>setIsBookingModalOpen(true)} className="cursor-pointer mt-4 w-full bg-[#FFD814] hover:bg-[#F7CA00] text-gray-900 font-semibold py-2 rounded-md transition">
-              Proceed to Checkout
+            <button
+              disabled={processing}
+              onClick={checkOutPayment}
+              className="cursor-pointer mt-4 w-full bg-[#FFD814] hover:bg-[#F7CA00] text-gray-900 font-semibold py-2 rounded-md transition"
+            >
+              {processing ? (
+                <span>
+                  <FaSpinner className="m-auto animate-spin" />
+                </span>
+              ) : (
+                "Proceed to Checkout"
+              )}
             </button>
-            <CheckOutModal
+            {/* <CheckOutModal
               closeModal={closeBookingModal}
               isOpen={isBookingModalOpen}
               bookingInfo={[...carts]}
               refetch={refetch}
               totalPrice={total}
-            />
+            /> */}
           </div>
         </div>
       </div>

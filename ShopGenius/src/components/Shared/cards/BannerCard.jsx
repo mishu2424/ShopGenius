@@ -20,7 +20,7 @@ const BannerCard = ({ items, message }) => {
               >
                 <img
                   src={
-                    message === "carts" ? item?.img : item?.colors[0]?.image[0]
+                    message === "carts" ? item?.selectedImage : item?.colors[0]?.image[0]
                   }
                   className="w-40 h-40 object-cover rounded-sm cursor-pointer hover:opacity-80 hover:brightness-75 duration-300"
                 />
@@ -41,9 +41,9 @@ const BannerCard = ({ items, message }) => {
               >
                 <img
                   src={
-                    message === "carts" ? item?.img : item?.colors[0]?.image[0]
+                    message === "carts" ? item?.selectedImage : item?.colors[0]?.image[0]
                   }
-                  className="w-60 h-40 object-top object-cover rounded-sm cursor-pointer hover:opacity-80 hover:brightness-75 duration-300"
+                  className="w-60 h-32 object-cover rounded-sm cursor-pointer hover:opacity-80 hover:brightness-75 duration-300"
                 />
               </Link>
             </div>

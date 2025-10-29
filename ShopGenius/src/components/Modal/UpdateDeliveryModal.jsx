@@ -192,7 +192,13 @@ const UpdateDeliveryModal = ({
                     disabled={deliveryStatus === "Delivered"}
                     onClick={() => modalHandler(selected)}
                     type="button"
-                    className="disabled:cursor-not-allowed disabled:text-blue-100 disabled:bg-blue-50 cursor-pointer inline-flex justify-center rounded-lg !disabled:bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:shadow-lg transition-all duration-200 hover:from-blue-700 hover:to-indigo-700"
+                    className={`${
+                      deliveryStatus === "Delivered" &&
+                      "cursor-not-allowed text-blue-100 bg-blue-50 btn px-6 py-2"
+                    } ${
+                      deliveryStatus !== "Delivered" &&
+                      "cursor-pointer inline-flex justify-center rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:shadow-lg transition-all duration-200 hover:from-blue-700 hover:to-indigo-700"
+                    }`}
                   >
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">

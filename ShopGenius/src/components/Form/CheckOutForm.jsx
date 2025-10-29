@@ -20,6 +20,7 @@ const CheckOutForm = ({ closeModal, bookingInfo, value, refetch }) => {
   const navigate = useNavigate();
   const stripe = useStripe();
   const elements = useElements();
+  console.log(bookingInfo);
 
   useEffect(() => {
     const total = bookingInfo?.totalPrice;
@@ -69,7 +70,9 @@ const CheckOutForm = ({ closeModal, bookingInfo, value, refetch }) => {
         navigate("/dashboard/my-orders");
       },
       onError: () => {
-        toast.error(`Something went wrong while updating product's sold count status!`);
+        toast.error(
+          `Something went wrong while updating product's sold count status!`
+        );
         closeModal();
       },
     });
@@ -137,8 +140,15 @@ const CheckOutForm = ({ closeModal, bookingInfo, value, refetch }) => {
     }
 
     if (paymentIntent.status === "succeeded") {
+      const { title, brand, category, totalPrice, quantity } = bookingInfo;
       const booking = {
-        ...bookingInfo,
+        title,
+        brand,
+        category,
+        totalPrice,
+        quantity,
+        selectedImage:bookingInfo?.selectedImage,
+        selectedColor:bookingInfo?.selectedColor,
         productBookingId: bookingInfo?._id,
         sold_count: bookingInfo?.sold_count + bookingInfo?.quantity,
         date: new Date(),
@@ -147,8 +157,9 @@ const CheckOutForm = ({ closeModal, bookingInfo, value, refetch }) => {
           email: user?.email,
           name: user?.displayName,
           photoURL: user?.photoURL,
+          location:value
         },
-        deliveryStatus:"Pending"
+        deliveryStatus: "Pending",
       };
       // console.log(booking);
 

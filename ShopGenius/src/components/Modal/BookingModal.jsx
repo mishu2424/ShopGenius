@@ -88,7 +88,7 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
                 <div className="mt-2">
                   <div className="text-sm text-gray-500">
                     {/* Location: {bookingInfo?.location} */}
-                    Location:
+                    Check your location before purchasing:
                     <GooglePlacesAutocomplete
                       apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
                       selectProps={{

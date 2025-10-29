@@ -14,6 +14,7 @@ const Banner = () => {
   const [carts, isCartLoading] = useCart();
   const [popularProducts,isPopularProductsLoading]=usePopularProducts();
 
+  // console.log(carts);
   if (isCartLoading||isPopularProductsLoading) return <LoadingSpinner />;
   return (
     <>

@@ -21,6 +21,8 @@ import SellerRoute from "./SellerRoute";
 import AdminRoute from "./AdminRoute";
 import AdminStatistics from "../pages/Dashboard/Admin/AdminStatistics";
 import MyCarts from "../pages/Dashboard/User/MyCarts";
+import PaymentSuccess from "../components/Shared/PaymentSuccess";
+import PaymentFail from "../components/Shared/PaymentFail";
 
 export const router = createBrowserRouter([
   {
@@ -41,6 +43,22 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <Carts />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/payment-success",
+        element: (
+          <PrivateRoute>
+            <PaymentSuccess />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/payment-fail",
+        element: (
+          <PrivateRoute>
+            <PaymentFail />
           </PrivateRoute>
         ),
       },

@@ -33,7 +33,7 @@ const ProductDetails = () => {
     setIsBookingModalOpen(false);
   };
 
-  const { data: product, isLoading, refetch:productDataRefech } = useQuery({
+  const { data: product, isLoading, refetch:productDataRefetch } = useQuery({
     queryKey: ["product-details", id],
     queryFn: async () => {
       const { data } = await axiosCommon(`/product/details/${id}`);
@@ -75,7 +75,7 @@ const ProductDetails = () => {
   const { mutateAsync: cartMutateAsync } = useMutation({
     mutationKey: ["user-cart"],
     mutationFn: async (cart) => {
-      const { data } = await axiosSecure.post("/cart", cart);
+      const { data } = await axiosSecure.post("/cart", {cart});
       return data;
     },
     onSuccess: () => {
@@ -100,6 +100,7 @@ const ProductDetails = () => {
         userInfo: {
           name: user?.displayName || "unknown",
           email: user?.email,
+          photoURL:user?.photoURL,
         },
         // productId: product?._id,
         // orderQuantity: quantity,
@@ -118,6 +119,7 @@ const ProductDetails = () => {
         //   email: user?.email,
         // },
       };
+      console.log(cart);
       delete cart?._id;
       try {
         const data = await cartMutateAsync(cart);
@@ -375,7 +377,7 @@ const ProductDetails = () => {
                   quantity,
                   totalPrice,
                 }}
-                refetch={productDataRefech}
+                refetch={productDataRefetch}
               />
             </div>
 

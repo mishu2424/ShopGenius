@@ -40,11 +40,15 @@ const CartItem = ({ item, handleRemove, onQuantityChange }) => {
             className={`text-sm mt-1 ${
               item?.availability?.status === "in_stock"
                 ? "text-green-700"
+                : item?.availability?.status === "low_stock"
+                ? "text-amber-400"
                 : "text-red-600"
             }`}
           >
             {item?.availability?.status === "in_stock"
               ? "In Stock"
+              : item?.availability?.status === "low_stock"
+              ? "low-stock"
               : "Out of Stock"}
           </p>
         </div>
