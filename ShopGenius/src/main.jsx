@@ -17,9 +17,9 @@ createRoot(document.getElementById("root")).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ProductSearchProvider>
-          <SmoothScrollProvider>
+          {/* <SmoothScrollProvider> */}
             <RouterProvider router={router} />
-          </SmoothScrollProvider>
+          {/* </SmoothScrollProvider> */}
           <Toaster />
         </ProductSearchProvider>
       </AuthProvider>

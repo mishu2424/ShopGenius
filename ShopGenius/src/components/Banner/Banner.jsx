@@ -10,12 +10,15 @@ import BannerCard from "../Shared/cards/BannerCard";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import Container from "../Shared/Container";
 import usePopularProducts from "../../hooks/usePopularProducts";
+import useRecentBoughtProducts from "../../hooks/useRecentBoughtProducts";
 const Banner = () => {
   const [carts, isCartLoading] = useCart();
-  const [popularProducts,isPopularProductsLoading]=usePopularProducts();
+  const [popularProducts, isPopularProductsLoading] = usePopularProducts();
+  const [recentBoughtProducts, isBoughtProductsLoading] =
+    useRecentBoughtProducts(false);
 
   // console.log(carts);
-  if (isCartLoading||isPopularProductsLoading) return <LoadingSpinner />;
+  if (isCartLoading || isPopularProductsLoading) return <LoadingSpinner />;
   return (
     <>
       <div>
@@ -49,13 +52,30 @@ const Banner = () => {
       <div className="max-w-[2000px] mx-auto xl:px-20 md:px-10 sm:px-2 px-4 relative -top-20 z-30">
         <div className="flex flex-col md:flex-row items-center justify-center gap-5">
           {carts.length > 0 && (
-            <div className="w-[350px] h-[350px] border border-transparent rounded-md shadow-2xl bg-white">
-              <BannerCard items={carts} message="carts"/>
+            <div className="w-[350px] h-[380px] border border-transparent rounded-md shadow-2xl bg-white">
+              <h2 className="text-xl font-semibold text-center text-gray-500">
+                Carts
+              </h2>
+              <BannerCard items={carts} message="carts" />
             </div>
           )}
           {popularProducts.length > 0 && (
-            <div className="w-[350px] h-[350px] border border-transparent rounded-md shadow-2xl bg-white">
-              <BannerCard items={popularProducts} message="popular"/>
+            <div className="w-[350px] h-[380px] border border-transparent rounded-md shadow-2xl bg-white">
+              <h2 className="text-xl font-semibold text-center text-gray-500">
+                Popular Products
+              </h2>
+              <BannerCard items={popularProducts} message="popular" />
+            </div>
+          )}
+          {recentBoughtProducts?.length > 0 && (
+            <div className="w-[350px] h-[380px] border border-transparent rounded-md shadow-2xl bg-white">
+              <h2 className="text-xl font-semibold text-center text-gray-500">
+                Recently Bought Products
+              </h2>
+              <BannerCard
+                items={recentBoughtProducts}
+                message="recent-bought-products"
+              />
             </div>
           )}
         </div>

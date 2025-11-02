@@ -546,9 +546,9 @@ async function run() {
 
     // server: read a completed session
     app.get(`/api/stripe/checkout-session`, async (req, res) => {
-      console.log("hit");
+      // console.log("hit");
       const { session_id } = req?.query;
-      console.log(session_id);
+      // console.log(session_id);
       if (!session_id)
         return res.status(400).json({ error: "Missing_session_id" });
 
@@ -572,7 +572,7 @@ async function run() {
       const li = await stripe.checkout.sessions.listLineItems(session.id, {
         limit: 100,
       });
-      console.log(session, items);
+      // console.log(session, 'after booking',items);
 
       res.json({
         session,
@@ -612,7 +612,9 @@ async function run() {
                 "userInfo.email": item?.user?.email,
               });
             }
+            console.log(item);
             const { date, transactionId, currency, deliveryStatus } = booking;
+            console.log("from booking", booking);
             const formedDoc = {
               ...item,
               date,
@@ -620,6 +622,7 @@ async function run() {
               currency,
               deliveryStatus,
             };
+            console.log(formedDoc);
 
             const result = await bookingCollection.insertOne(formedDoc);
           });
@@ -657,6 +660,38 @@ async function run() {
     app.get(`/popular-products`, async (req, res) => {
       const result = await productCollection.find({ popular: true }).toArray();
       res.send(result);
+    });
+
+    // recently bought products
+    app.get(`/recent-bought/:email`, async (req, res) => {
+      const email = req?.query?.email;
+      const recentBoughtCategories = req?.query?.recentBoughtCat;
+      const result = await bookingCollection
+        .find({ "user?.email": email })
+        .sort({ _id: -1 })
+        .limit(4)
+        .toArray();
+
+      if(recentBoughtCategories=='false'){
+        console.log('entered',recentBoughtCategories);
+        return res.send(result);
+      }
+
+      // let cats;
+      if (recentBoughtCategories=='true' && result.length > 0) {
+        const uniqueCategories = [
+          ...new Set(result.map((res) => res.category)),
+        ];
+
+        if(uniqueCategories.length===0){
+          return res.send([]);
+        }
+
+        const products=await productCollection.find({category:{$in:uniqueCategories}}).limit(20).toArray();
+        // console.log(products);
+        return res.send(products)
+      }
+      
     });
 
     // best-seller

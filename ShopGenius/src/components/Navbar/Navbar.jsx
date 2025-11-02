@@ -2,7 +2,7 @@ import { FaCartShopping } from "react-icons/fa6";
 import logo from "../../assets/logo.png";
 import { IoIosSearch } from "react-icons/io";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import profile from "../../assets/placeholder.jpg";
 import useAuth from "../../hooks/useAuth";
 import useCart from "../../hooks/useCart";
@@ -35,6 +35,17 @@ const Navbar = ({ navbarRef }) => {
     setCurrentPage(1);
     navigate("/products");
   };
+
+  useEffect(() => {
+    if (!user?.email) {
+      const id = setTimeout(() => {
+        console.log("hello");
+      }, 7000);
+      return () => {
+        clearTimeout(id);
+      };
+    }
+  }, []);
 
   if (isCartLoading) return <LoadingSpinner />;
   return (

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useEffect } from "react";
 import SplashScreen from "../components/Shared/SplashScreen";
 import useMyLocation from "../hooks/useMyLocation";
+import LoginPromptModal from "../components/Modal/LoginPromptModal";
 
 const Main = () => {
   const navbarRef = useRef();
@@ -24,6 +25,7 @@ const Main = () => {
   if (loading) {
     return <SplashScreen />; // ⏳ Show logo until promise resolves
   }
+  
 
   if(!location) return getLocation();
   console.log(location);
@@ -33,6 +35,7 @@ const Main = () => {
       <div className="min-h-[calc(100vh-472px)]">
         <Outlet />
       </div>
+      <LoginPromptModal/>
       <Footer navbarRef={navbarRef} />
     </div>
   );

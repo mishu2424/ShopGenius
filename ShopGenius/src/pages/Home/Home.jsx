@@ -3,6 +3,7 @@ import Banner from "../../components/Banner/Banner";
 import BestSeller from "../../components/Home/BestSeller/BestSeller";
 import DiscountedProducts from "../../components/Home/DiscountedProducts";
 import PremiumMembership from "../../components/Home/PremiumMembership/PremiumMembership";
+import RecentBoughtCategories from "../../components/Home/RecentBoughtCategories/RecentBoughtCategories";
 
 
 const Home = () => {
@@ -15,6 +16,7 @@ const Home = () => {
       <Banner />
       <DiscountedProducts />
       <BestSeller />
+      <RecentBoughtCategories/>
       <PremiumMembership />
     </div>
   );

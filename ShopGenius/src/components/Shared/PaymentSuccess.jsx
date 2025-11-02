@@ -6,8 +6,12 @@ import { Link } from "react-router-dom";
 import { axiosSecure } from "../../hooks/useAxiosSecure";
 import axios from "axios";
 import { useMutation } from "@tanstack/react-query";
+import LoadingSpinner from "./LoadingSpinner";
+import SplashScreen from "./SplashScreen";
+import useCart from "../../hooks/useCart";
 const PaymentSuccess = () => {
   const [loading, setLoading] = useState(true);
+  const [carts,isCartLoading,refetch]=useCart();
 
   // update quantity
   const { mutateAsync: updateQuantityStatus, isPending: isUpdatingStatus } =
@@ -21,7 +25,9 @@ const PaymentSuccess = () => {
         );
         return data;
       },
-      onSuccess: () => {},
+      onSuccess: () => {
+        refetch();
+      },
       onError: () => {
         toast.error(
           `Something went wrong while updating product's sold count status!`
@@ -36,7 +42,7 @@ const PaymentSuccess = () => {
         const sessionId = params.get("session_id");
         if (!sessionId) return;
         console.log(sessionId);
-
+        setLoading(true);
         const { data } = await axiosSecure(
           `/api/stripe/checkout-session?session_id=${sessionId}`
         );
@@ -83,10 +89,11 @@ const PaymentSuccess = () => {
             sold_count: i.sold_count + i.quantity,
             seller: i.seller,
             user: i.user,
+            deliveryInformation: i.deliveryInformation,
           })),
           source: "checkout_success",
         };
-        console.log(bookingDoc, items);
+        console.log(bookingDoc);
 
         await axiosSecure.post("/booking", bookingDoc); // your existing /booking route
         items.forEach(async (item) => {
@@ -106,14 +113,15 @@ const PaymentSuccess = () => {
     })();
   }, []);
   // toast.success("Payment Successful!");
+  if (loading || isCartLoading) return <LoadingSpinner/>;
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">
       <div className="w-72">
         <Lottie animationData={paymentSuccess} loop={true}></Lottie>
       </div>
-      <Link to={`/`}>
+      <Link to={`/dashboard/my-orders`}>
         <button className="btn py-2 px-6 bg-green-800 text-white rounded-md cursor-pointer">
-          Go Back To Home
+          Orders
         </button>
       </Link>
     </div>

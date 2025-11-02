@@ -13,14 +13,39 @@ import BookingModal from "../../components/Modal/BookingModal";
 import CheckOutModal from "../../components/Modal/CheckOutModal";
 import { axiosCommon } from "../../hooks/useAxiosCommon";
 import { FaSpinner } from "react-icons/fa";
+import AddressModal from "../../components/Modal/AddressModal";
+import useMyLocation from "../../hooks/useMyLocation";
 
 const Carts = () => {
   const axiosSecure = useAxiosSecure();
   const navigate = useNavigate();
   const [carts, isCartLoading, refetch] = useCart();
   const [cartsData, setCartsData] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
+
+  // location
+  const { location, getLocation } = useMyLocation();
+  const [loc, setLoc] = useState("");
+  console.log(loc);
+
+  useEffect(() => {
+    if (isOpen && !location) getLocation();
+    // console.log(location);
+  }, [isOpen, location, getLocation]);
+
+  // ✅ when hook resolves, prefill the autocomplete
+  useEffect(() => {
+    if (location?.address) {
+      setLoc({ label: location.address, value: location });
+    }
+    console.log(location);
+  }, [location]);
+
+  const closeModal = () => {
+    setIsOpen(false);
+  };
 
   const closeBookingModal = () => {
     setIsBookingModalOpen(false);
@@ -89,14 +114,15 @@ const Carts = () => {
       return data;
     },
     onSuccess: () => {
-      setProcessing(false);
+      // setProcessing(false);
     },
     onError: () => {
       setProcessing(false);
     },
   });
 
-  const checkOutPayment = async () => {
+  const checkOutPayment = async (e) => {
+    e.preventDefault();
     setProcessing(true);
     try {
       // const availableItems = carts.filter((cart) => {
@@ -108,6 +134,18 @@ const Carts = () => {
       //   );
       // });
       // console.log(availableItems);
+      const address = loc?.label;
+      const comment = e.target.comment.value;
+      const deliveryPreference = e.target.deliveryPreference.value;
+      if (!address) {
+        return toast.error("Please provide your address");
+      }
+      const deliveryInformation = {
+        address,
+        comment,
+        deliveryPreference,
+      };
+
       const sortedCartItems = carts
         .filter((cart) => {
           console.log(
@@ -151,14 +189,18 @@ const Carts = () => {
             currency: item.currency ?? "CAD",
             seller: item.seller, // optional meta you may pass along
             user: item.userInfo,
+            deliveryInformation,
           };
         });
+
       console.log(sortedCartItems);
       const data = await paymentAsync(sortedCartItems);
       // console.log(data.url);
       window.location.href = data?.url;
+      setProcessing(false);
     } catch (err) {
       toast.error(err.message);
+      setProcessing(false);
     }
   };
 
@@ -207,8 +249,8 @@ const Carts = () => {
               ${Number(total.toFixed(2))}
             </p>
             <button
-              disabled={processing}
-              onClick={checkOutPayment}
+              // onClick={checkOutPayment}
+              onClick={() => setIsOpen(true)}
               className="cursor-pointer mt-4 w-full bg-[#FFD814] hover:bg-[#F7CA00] text-gray-900 font-semibold py-2 rounded-md transition"
             >
               {processing ? (
@@ -219,6 +261,16 @@ const Carts = () => {
                 "Proceed to Checkout"
               )}
             </button>
+            {/* address modal */}
+            <AddressModal
+              loc={loc}
+              setLoc={setLoc}
+              isOpen={isOpen}
+              setIsOpen={setIsOpen}
+              handleCheckOut={checkOutPayment}
+              totalPrice={total}
+              processing={processing}
+            />
             {/* <CheckOutModal
               closeModal={closeBookingModal}
               isOpen={isBookingModalOpen}

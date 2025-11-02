@@ -89,8 +89,11 @@ const WomenSwiper = ({ bestProductsWomen }) => {
                   >
                     {product?.title}
                   </h3>
-                  <span className="text-sm text-gray-700 dark:text-gray-200">
-                    Software Engineer
+                  <span className="text-sm text-gray-700 dark:text-gray-200 font-semibold">
+                    $
+                    {product?.discount?.active
+                      ? product?.salePrice
+                      : product?.price}
                   </span>
                 </div>
               </div>
@@ -98,9 +101,9 @@ const WomenSwiper = ({ bestProductsWomen }) => {
           </SwiperSlide>
         ))}
       </Swiper>
-      <div className="flex justify-center gap-4 mt-4">
+      <div className="flex justify-center gap-4 mt-4 relative">
         <button
-          className={`absolute left-8 top-36 py-5 custom-prev-btn2 z-40 px-4 cursor-pointer rounded transition-all duration-300 ${
+          className={`absolute left-8 -top-52 py-5 custom-prev-btn2 z-40 px-4 cursor-pointer rounded transition-all duration-300 ${
             activeIndex > 0
               ? "bg-blue-600 text-white hover:bg-blue-500"
               : "bg-white text-blue-500 hover:bg-gray-100"
@@ -108,7 +111,7 @@ const WomenSwiper = ({ bestProductsWomen }) => {
         >
           <IoIosArrowDropleft />
         </button>
-        <button className="absolute right-8 top-36 py-5 custom-next-btn2 bg-blue-600 text-white px-4 cursor-pointer rounded hover:bg-blue-500 transition-all duration-300 z-40">
+        <button className="absolute right-8 -top-52 py-5 custom-next-btn2 bg-blue-600 text-white px-4 cursor-pointer rounded hover:bg-blue-500 transition-all duration-300 z-40">
           <IoIosArrowDropright />{" "}
         </button>
       </div>

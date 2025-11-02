@@ -10,7 +10,14 @@ import useRole from "../../hooks/useRole";
 import useAxiosSecure from "../../hooks/useAxiosSecure";
 import useAuth from "../../hooks/useAuth";
 import LoadingSpinner from "../Shared/LoadingSpinner";
-const CheckOutForm = ({ closeModal, bookingInfo, value, refetch }) => {
+const CheckOutForm = ({
+  closeModal,
+  bookingInfo,
+  value,
+  refetch,
+  comment,
+  deliveryPreference,
+}) => {
   const { user, setToggle, toggleHandler } = useAuth();
   const [role] = useRole();
   const [clientSecret, setClientSecret] = useState("");
@@ -79,6 +86,15 @@ const CheckOutForm = ({ closeModal, bookingInfo, value, refetch }) => {
 
   const handleBookings = async (e) => {
     e.preventDefault();
+
+    if (!value) {
+      return toast.error("Please provide the delivery address!");
+    }
+
+    if (!deliveryPreference) {
+      return toast.error("Please provide the delivery preference!");
+    }
+
     // if (role === "admin")
     //   return toast.error("Admin account cannot book the rooms");
 
@@ -147,8 +163,8 @@ const CheckOutForm = ({ closeModal, bookingInfo, value, refetch }) => {
         category,
         totalPrice,
         quantity,
-        selectedImage:bookingInfo?.selectedImage,
-        selectedColor:bookingInfo?.selectedColor,
+        selectedImage: bookingInfo?.selectedImage,
+        selectedColor: bookingInfo?.selectedColor,
         productBookingId: bookingInfo?._id,
         sold_count: bookingInfo?.sold_count + bookingInfo?.quantity,
         date: new Date(),
@@ -157,9 +173,14 @@ const CheckOutForm = ({ closeModal, bookingInfo, value, refetch }) => {
           email: user?.email,
           name: user?.displayName,
           photoURL: user?.photoURL,
-          location:value
+          location: value,
         },
         deliveryStatus: "Pending",
+        deliveryInformation:{
+          address:value,
+          comment,
+          deliveryPreference
+        }
       };
       // console.log(booking);
 
