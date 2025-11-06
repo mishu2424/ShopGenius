@@ -1,8 +1,7 @@
 import useAuth from "../../hooks/useAuth";
 
-
-export default function ResetPasswordForm({ handleResetPassword, resetEmail }) {
-  const { user = "" } = useAuth();
+export default function ResetPasswordForm({ handleResetPassword }) {
+  const { user } = useAuth() || {};
   return (
     <form onSubmit={handleResetPassword}>
       <div>
@@ -10,8 +9,8 @@ export default function ResetPasswordForm({ handleResetPassword, resetEmail }) {
           <label>Email:</label>
           <input
             type="email"
-            defaultValue={user?.email || resetEmail}
-            disabled
+            defaultValue={user?.email}
+            disabled={user?.email}
             name="email"
             className="border border-gray-400 w-full rounded p-2"
           />

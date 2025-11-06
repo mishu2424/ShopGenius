@@ -55,7 +55,7 @@ const DiscountedProducts = () => {
       {
         breakpoint: 768,
         settings: {
-          slidesToShow: 1,
+          slidesToShow: 2,
           slidesToScroll: 1,
           initialSlide: 1,
         },
@@ -63,7 +63,7 @@ const DiscountedProducts = () => {
       {
         breakpoint: 820,
         settings: {
-          slidesToShow: 1,
+          slidesToShow: 3,
           slidesToScroll: 1,
           initialSlide: 1,
         },

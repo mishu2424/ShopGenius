@@ -4,6 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { RxCross2 } from "react-icons/rx";
+import logo from '../../assets/logo.png'
 
 const DISMISS_KEY = "sg_login_prompt_dismissed_at";
 const DISMISS_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -15,12 +16,12 @@ export default function LoginPromptModal() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  console.log(location?.pathname);
+  // console.log(location?.pathname);
   // Don’t show on auth/checkout-like routes
   const shouldSkip = useMemo(() => {
     const p = location.pathname.toLowerCase();
     // console.log(p.startsWith("/"));
-    return ["/login", "/register", "/signup", "/checkout", "/payment-success", "/payment-fail"].some((r) =>
+    return ["/login", "/register", "/signup", "/checkout", "/payment-success", "/payment-fail", "/dashboard"].some((r) =>
       p.startsWith(r)
     );
   }, [location.pathname]);
@@ -92,8 +93,11 @@ export default function LoginPromptModal() {
                 </div>
 
                 {/* body */}
-                <div className="mt-3 text-sm text-gray-600">
-                  Create an account or sign in to track orders, save carts, and get personalized deals.
+                <div className="mt-3 text-sm text-gray-600 flex flex-col items-center justify-center">
+                  <h3 className="text-xs">Create an account or sign in to track orders, save carts, and get personalized deals.</h3>
+                  <div>
+                    <img className="w-18 h-18" src={logo} alt="logo" />
+                  </div>
                 </div>
 
                 {/* actions */}

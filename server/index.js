@@ -7,6 +7,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 const { randomUUID } = require("crypto"); // Node 16+
+const { timeStamp } = require("console");
 
 const port = process.env.PORT || 8000;
 
@@ -663,35 +664,44 @@ async function run() {
     });
 
     // recently bought products
-    app.get(`/recent-bought/:email`, async (req, res) => {
-      const email = req?.query?.email;
+    app.get(`/recent-bought`, verifyToken, async (req, res) => {
+      const email = req?.user?.email;
+      console.log(email);
       const recentBoughtCategories = req?.query?.recentBoughtCat;
       const result = await bookingCollection
-        .find({ "user?.email": email })
+        .find({ "user.email": email })
         .sort({ _id: -1 })
         .limit(4)
         .toArray();
+      console.log(result);
 
-      if(recentBoughtCategories=='false'){
-        console.log('entered',recentBoughtCategories);
+      if (recentBoughtCategories == "false") {
+        console.log("entered", recentBoughtCategories);
+        console.log(recentBoughtCategories);
         return res.send(result);
       }
 
       // let cats;
-      if (recentBoughtCategories=='true' && result.length > 0) {
-        const uniqueCategories = [
-          ...new Set(result.map((res) => res.category)),
-        ];
+      if (result.length > 0) {
+        if (recentBoughtCategories == "true") {
+          const uniqueCategories = [
+            ...new Set(result.map((res) => res.category)),
+          ];
 
-        if(uniqueCategories.length===0){
-          return res.send([]);
+          if (uniqueCategories.length === 0) {
+            return res.send([]);
+          }
+
+          const products = await productCollection
+            .find({ category: { $in: uniqueCategories } })
+            .limit(20)
+            .toArray();
+          // console.log(products);
+          return res.send(products);
         }
-
-        const products=await productCollection.find({category:{$in:uniqueCategories}}).limit(20).toArray();
-        // console.log(products);
-        return res.send(products)
+      } else {
+        return res.send([]);
       }
-      
     });
 
     // best-seller
@@ -785,6 +795,54 @@ async function run() {
 
     // dashboard
     // users dashboard
+
+    // guest-stats
+    app.get("/guest-stats", verifyToken, async (req, res) => {
+      const { email } = req?.user;
+
+      const bookings = await bookingCollection
+        .find(
+          { "user.email": email },
+          {
+            projection: {
+              date: 1,
+              totalPrice: 1,
+            },
+          }
+        )
+        .toArray();
+
+      const { timeStamp } = await userCollection.findOne(
+        { email },
+        {
+          projection: {
+            timeStamp: 1,
+          },
+        }
+      );
+
+      const chartData = bookings?.map((booking) => {
+        const day = new Date(booking?.date).getDate();
+        const month = new Date(booking?.date).getMonth() + 1;
+        const data = [`${day}/${month}`, Number(booking?.totalPrice)];
+        return data;
+      });
+
+      chartData.unshift(["Day", "Sales"]);
+
+      const totalSales = bookings.reduce(
+        (acc, booking) => acc + Number(booking?.totalPrice),
+        0
+      );
+
+      res.send({
+        totalBookings: bookings.length,
+        timeStamp,
+        totalSales,
+        chartData,
+      });
+    });
+
     app.get(`/my-orders/:email`, async (req, res) => {
       const email = req?.params?.email;
       console.log(req?.params);
@@ -803,6 +861,92 @@ async function run() {
     });
 
     // seller dashboard
+    // stats
+
+    // seller-stats
+    app.get("/seller-stats", verifyToken, async (req, res) => {
+      const { email } = req?.user;
+
+      const totalProducts = await productCollection.countDocuments({
+        "seller.email": email,
+      });
+
+      const bookings = await bookingCollection
+        .find(
+          { "seller.email": email },
+          {
+            projection: {
+              date: 1,
+              title: 1,
+              sold_count: 1,
+              totalPrice: 1,
+            },
+          }
+        )
+        .toArray();
+
+      const { timeStamp } = await userCollection.findOne(
+        { email },
+        {
+          projection: {
+            timeStamp: 1,
+          },
+        }
+      );
+
+      // [
+      //   ["Date", "Total Sales", "Sold Count", { role: "tooltip" }],
+      //   [new Date(2025, 0, 1), 1499, 50, "Dior Sauvage"],
+      //   [new Date(2025, 0, 2), 2399, 75, "Bleu de Chanel"],
+      //   [new Date(2025, 0, 3), 899, 30, "Versace Eros"],
+      //   [new Date(2025, 0, 4), 1199, 45, "Prada Luna Rossa"],
+      // ];
+
+      // header: date, Total Sales, tooltip for sales, Sold Count, tooltip for sold
+      const chartData = [
+        [
+          "Date",
+          "Total Sales",
+          { role: "tooltip", type: "string", p: { html: true } },
+          "Sold Count",
+          { role: "tooltip", type: "string", p: { html: true } },
+        ],
+        // rows...
+        // ["01/11", 3199.98, "<b>iPhone 14…</b><br/>Sales: $3,199.98",
+        //             610,    "<b>iPhone 14…</b><br/>Sold: 610"],
+      ];
+
+      const rows = bookings.map((b) => {
+        const day = new Date(b?.date).getDate();
+        const month = new Date(b?.date).getMonth() + 1;
+        const dateLabel = `${day}/${month}`;
+
+        const sales = Number(b.totalPrice || 0);
+        const sold = Number(b.sold_count || 0);
+        const title = b.title ?? "";
+
+        const salesTip = `<div><b>${title}</b><br/>Sales: $${sales.toLocaleString()}</div>`;
+        const soldTip = `<div><b>${title}</b><br/>Sold: ${sold.toLocaleString()}</div>`;
+
+        return [dateLabel, sales, salesTip, sold, soldTip];
+      });
+
+      chartData.push(...rows);
+
+      const totalSales = bookings.reduce(
+        (acc, booking) => acc + Number(booking?.totalPrice),
+        0
+      );
+
+      res.send({
+        totalProducts: totalProducts,
+        totalBookings: bookings.length,
+        timeStamp,
+        totalSales,
+        chartData,
+      });
+    });
+
     app.get(`/my-products/:email`, async (req, res) => {
       const email = req?.params?.email;
       const result = await productCollection
@@ -861,6 +1005,77 @@ async function run() {
     });
 
     // admin dashboard
+    // stats
+
+    // admin-stats
+    app.get("/admin-stats", verifyToken, async (req, res) => {
+      const { email } = req?.user;
+
+      const bookings = await bookingCollection
+        .find(
+          {},
+          {
+            projection: {
+              date: 1,
+              totalPrice: 1,
+            },
+          }
+        )
+        .toArray();
+
+      const { timeStamp } = await userCollection.findOne(
+        { email },
+        {
+          projection: {
+            timeStamp: 1,
+          },
+        }
+      );
+
+      const totalUsers = await userCollection.countDocuments({});
+
+
+      const chartData=[["Month","Month Sales","Total Orders"]]
+
+      const pipeline=[
+        {$project:{
+          date:{$toDate:"$date"},
+          price:{$toDouble:"$totalPrice"},
+          sold:{$toInt:"$sold_count"}
+        }},
+        {
+          $group:{
+            _id:{$dateTrunc:{date:"$date",unit:"month",timezone:"UTC"}},
+            totalSales:{$sum:"$price"},
+            totalSold:{$sum:"$sold"},
+            totalOrders:{$sum:1}
+          }
+        },
+        {$sort:{_id:1}}
+      ];
+      const rows=await bookingCollection.aggregate(pipeline).toArray();
+      chartData.push(...rows.map(r=>{
+        const month=new Date(r._id).getUTCMonth() + 1;
+        console.log(r._id);
+        const year=new Date(r._id).getUTCFullYear();
+        const fullDate=`${year}/${month}`;
+        console.log(fullDate);
+        return [fullDate,Number(r.totalSales),Number(r.totalOrders)]}))
+
+      const totalSales = bookings.reduce(
+        (acc, booking) => acc + Number(booking?.totalPrice),
+        0
+      );
+
+      res.send({
+        totalSold: bookings.length,
+        timeStamp,
+        totalUsers,
+        totalSales,
+        chartData
+      });
+    });
+
     app.patch("/update-user-role/:email", async (req, res) => {
       const email = req?.params?.email;
       const { selectedRole } = req?.body;

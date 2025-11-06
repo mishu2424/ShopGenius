@@ -172,8 +172,7 @@ const CheckOutForm = ({
         user: {
           email: user?.email,
           name: user?.displayName,
-          photoURL: user?.photoURL,
-          location: value,
+          photoURL: user?.photoURL
         },
         deliveryStatus: "Pending",
         deliveryInformation:{

@@ -12,6 +12,10 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 
 import { IoIosArrowDropleft, IoIosArrowDropright } from "react-icons/io";
+import {
+  MdOutlineKeyboardArrowLeft,
+  MdOutlineKeyboardArrowRight,
+} from "react-icons/md";
 
 const WomenSwiper = ({ bestProductsWomen }) => {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -23,6 +27,7 @@ const WomenSwiper = ({ bestProductsWomen }) => {
       <Swiper
         slidesPerView={1}
         spaceBetween={10}
+        // centeredSlides={true}
         pagination={{
           clickable: true,
         }}
@@ -53,7 +58,7 @@ const WomenSwiper = ({ bestProductsWomen }) => {
             <Link to={`/product/${product?._id}`}>
               <div
                 key={product?._id}
-                className="w-full max-w-xs overflow-hidden bg-white rounded-lg shadow-lg dark:bg-gray-800 my-3 hover:scale-105 duration-300 border border-transparent hover:border-blue-500"
+                className="w-full max-w-xs mx-auto md:mx-5 overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800 my-3 hover:scale-105 duration-300 border border-transparent hover:border-blue-500"
               >
                 <Swiper
                   spaceBetween={30}
@@ -101,20 +106,34 @@ const WomenSwiper = ({ bestProductsWomen }) => {
           </SwiperSlide>
         ))}
       </Swiper>
-      <div className="flex justify-center gap-4 mt-4 relative">
-        <button
-          className={`absolute left-8 -top-52 py-5 custom-prev-btn2 z-40 px-4 cursor-pointer rounded transition-all duration-300 ${
-            activeIndex > 0
-              ? "bg-blue-600 text-white hover:bg-blue-500"
-              : "bg-white text-blue-500 hover:bg-gray-100"
-          }`}
-        >
-          <IoIosArrowDropleft />
-        </button>
-        <button className="absolute right-8 -top-52 py-5 custom-next-btn2 bg-blue-600 text-white px-4 cursor-pointer rounded hover:bg-blue-500 transition-all duration-300 z-40">
-          <IoIosArrowDropright />{" "}
-        </button>
-      </div>
+
+      <button
+        className={`custom-prev-btn2
+            absolute top-2 right-12
+            w-9 h-9 grid place-items-center rounded shadow border z-40 transition
+            lg:top-36 lg:left-8 lg:right-auto
+            lg:w-auto lg:h-auto lg:py-5 lg:px-4
+            ${
+              activeIndex > 0
+                ? "bg-blue-600 text-white hover:bg-blue-500"
+                : "bg-white text-blue-600 hover:bg-gray-100"
+            }`}
+        aria-label="Previous"
+      >
+        <MdOutlineKeyboardArrowLeft className="w-6 h-6 lg:w-5 lg:h-5" />
+      </button>
+
+      <button
+        className="custom-next-btn2
+            absolute top-2 right-2
+            w-9 h-9 grid place-items-center rounded shadow border z-40
+            bg-blue-600 text-white hover:bg-blue-500 transition
+            lg:top-36 lg:right-8
+            lg:w-auto lg:h-auto lg:py-5 lg:px-4"
+        aria-label="Next"
+      >
+        <MdOutlineKeyboardArrowRight className="w-6 h-6 lg:w-5 lg:h-5" />
+      </button>
     </div>
   );
 };

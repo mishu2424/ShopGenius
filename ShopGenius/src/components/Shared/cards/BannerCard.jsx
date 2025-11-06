@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const BannerCard = ({ items, message }) => {
-  // console.log(items);
+  console.log(items, message);
   return (
     <div className="grid grid-cols-2">
       {items.length > 2
@@ -41,12 +41,14 @@ const BannerCard = ({ items, message }) => {
                 to={
                   message === "carts"
                     ? `/product/${item?.productId}`
-                    : `/product/${item?._id}`
+                    : message === "popular"
+                    ? `/product/${item?._id}`
+                    : `/product/${item?.productBookingId}`
                 }
               >
                 <img
                   src={
-                    message === "carts"
+                    message === "carts" || message === "recent-bought-products"
                       ? item?.selectedImage
                       : item?.colors[0]?.image[0]
                   }
@@ -62,12 +64,14 @@ const BannerCard = ({ items, message }) => {
                 to={
                   message === "carts"
                     ? `/product/${item?.productId}`
-                    : `/product/${item?._id}`
+                    : message === "popular"
+                    ? `/product/${item?._id}`
+                    : `/product/${item?.productBookingId}`
                 }
               >
                 <img
                   src={
-                    message === "carts"
+                    message === "carts" || message === "recent-bought-products"
                       ? item?.selectedImage
                       : item?.colors[0]?.image[0]
                   }

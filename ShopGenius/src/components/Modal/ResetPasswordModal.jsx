@@ -7,8 +7,7 @@ import ResetPasswordForm from "../Form/ResetPasswordForm";
 const ResetPasswordModal = ({
   handleResetPassword,
   isResetPasswordOpen,
-  setIsResetPasswordOpen,
-  resetEmail
+  setIsResetPasswordOpen
 }) => {
   // console.log(resetEmail);
   return (
@@ -49,7 +48,7 @@ const ResetPasswordModal = ({
                   Update Password
                 </Dialog.Title>
                 <div className="mt-2">
-                  <ResetPasswordForm handleResetPassword={handleResetPassword} resetEmail={resetEmail}/>
+                  <ResetPasswordForm handleResetPassword={handleResetPassword}/>
                 </div>
 
                 <div className="mt-4">

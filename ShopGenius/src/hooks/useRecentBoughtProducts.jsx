@@ -15,13 +15,13 @@ const useRecentBoughtProducts = (isCat = false) => {
     enabled: !!user && !!user.email,
     queryFn: async () => {
       const { data } = await axiosSecure(
-        `/recent-bought/${user?.email}?recentBoughtCat=${isCat}`
+        `/recent-bought?recentBoughtCat=${isCat}`
       );
       return data;
     },
   });
 
-  console.log(recentBoughtProducts);
+  // console.log(recentBoughtProducts);
   return [recentBoughtProducts, isBoughtProductsLoading, refetch];
 };
 

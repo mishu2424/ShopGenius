@@ -28,6 +28,7 @@ const NeutralSwiper = ({ bestProducts }) => {
       <Swiper
         slidesPerView={1}
         spaceBetween={10}
+        centeredSlides={true}
         pagination={{
           clickable: true,
         }}
@@ -40,14 +41,17 @@ const NeutralSwiper = ({ bestProducts }) => {
           640: {
             slidesPerView: 2,
             spaceBetween: 20,
+            centeredSlides: true,
           },
           768: {
             slidesPerView: 3,
             spaceBetween: 40,
+            centeredSlides: false,
           },
           1024: {
             slidesPerView: 4,
-            spaceBetween: 20,
+            spaceBetween: 10,
+            centeredSlides: false,
           },
         }}
         modules={[Navigation]}
@@ -58,7 +62,7 @@ const NeutralSwiper = ({ bestProducts }) => {
             <Link to={`/product/${product?._id}`}>
               <div
                 key={product?._id}
-                className="w-full max-w-xs overflow-hidden bg-white rounded-lg shadow-lg dark:bg-gray-800 my-3 hover:scale-105 duration-300 border border-transparent hover:border-blue-500"
+                className="w-full max-w-xs md:mx-5 mx-auto overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800 my-3 hover:scale-105 duration-300 border border-transparent hover:border-blue-500"
               >
                 <Swiper
                   spaceBetween={30}
@@ -106,20 +110,34 @@ const NeutralSwiper = ({ bestProducts }) => {
           </SwiperSlide>
         ))}
       </Swiper>
-      <div className="flex justify-center gap-4 mt-4">
-        <button
-          className={`absolute left-8 top-36 py-5 custom-prev-btn z-40 px-4 cursor-pointer rounded transition-all duration-300 ${
-            activeIndex > 0
-              ? "bg-blue-600 text-white hover:bg-blue-500"
-              : "bg-white text-blue-500 hover:bg-gray-100"
-          }`}
-        >
-          <MdOutlineKeyboardArrowLeft />
-        </button>
-        <button className="absolute right-8 top-36 py-5 custom-next-btn bg-blue-600 text-white px-4 cursor-pointer rounded hover:bg-blue-500 transition-all duration-300 z-40">
-          <MdOutlineKeyboardArrowRight />{" "}
-        </button>
-      </div>
+      <button
+        className={`custom-prev-btn
+            absolute top-2 right-12
+            w-9 h-9 grid place-items-center rounded shadow border z-40 transition
+            lg:top-36 lg:left-8 lg:right-auto
+            lg:w-auto lg:h-auto lg:py-5 lg:px-4
+            ${
+              activeIndex > 0
+                ? "bg-blue-600 text-white hover:bg-blue-500"
+                : "bg-white text-blue-600 hover:bg-gray-100"
+            }`}
+        aria-label="Previous"
+      >
+        <MdOutlineKeyboardArrowLeft className="w-6 h-6 lg:w-5 lg:h-5" />
+      </button>
+
+      {/* Next: mobile/tablet top-right corner; desktop original */}
+      <button
+        className="custom-next-btn
+            absolute top-2 right-2
+            w-9 h-9 grid place-items-center rounded shadow border z-40
+            bg-blue-600 text-white hover:bg-blue-500 transition
+            lg:top-36 lg:right-8
+            lg:w-auto lg:h-auto lg:py-5 lg:px-4"
+        aria-label="Next"
+      >
+        <MdOutlineKeyboardArrowRight className="w-6 h-6 lg:w-5 lg:h-5" />
+      </button>
     </div>
   );
 };

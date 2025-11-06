@@ -5,7 +5,25 @@ import { GiPlayerTime } from "react-icons/gi";
 import "react-date-range/dist/styles.css"; // main css file
 import "react-date-range/dist/theme/default.css"; // theme css file
 import { Helmet } from "react-helmet-async";
+import { axiosSecure } from "../../../hooks/useAxiosSecure";
+import { useQuery } from "@tanstack/react-query";
+import LoadingSpinner from "../../../components/Shared/LoadingSpinner";
+import SellerChart from "../../../components/Shared/Chart/SellerChart";
+import { formatDistanceToNow } from "date-fns";
+import { BiLogoProductHunt } from "react-icons/bi";
+
 const SellerStatistics = () => {
+  const { data: sellerStatsData, isLoading } = useQuery({
+    queryKey: ["seller-stats"],
+    queryFn: async () => {
+      const { data } = await axiosSecure("/seller-stats");
+      return data;
+    },
+  });
+
+  console.log(sellerStatsData);
+
+  if (isLoading) return <LoadingSpinner />;
   return (
     <div>
       <Helmet>
@@ -26,7 +44,7 @@ const SellerStatistics = () => {
                 Total Sales
               </p>
               <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
-                $45
+                ${sellerStatsData?.totalSales.toFixed(2)}
               </h4>
             </div>
           </div>
@@ -43,7 +61,7 @@ const SellerStatistics = () => {
                 Total Bookings
               </p>
               <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
-                56
+                {sellerStatsData?.totalBookings}
               </h4>
             </div>
           </div>
@@ -52,14 +70,14 @@ const SellerStatistics = () => {
             <div
               className={`bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr shadow-lg absolute -mt-4 grid h-16 w-16 place-items-center from-pink-600 to-pink-400 text-white shadow-pink-500/40`}
             >
-              <BsFillHouseDoorFill className="w-6 h-6 text-white" />
+              <BiLogoProductHunt className="w-6 h-6 text-white" />
             </div>
             <div className="p-4 text-right">
               <p className="block antialiased font-sans text-sm leading-normal font-normal text-blue-gray-600">
-                Total Rooms
+                Total Products
               </p>
               <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
-                435
+                {sellerStatsData?.totalProducts}
               </h4>
             </div>
           </div>
@@ -73,10 +91,10 @@ const SellerStatistics = () => {
             </div>
             <div className="p-4 text-right">
               <p className="block antialiased font-sans text-sm leading-normal font-normal text-blue-gray-600">
-                Host Since...
+                Seller Since...
               </p>
               <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
-                3 Days
+                {formatDistanceToNow(sellerStatsData?.timeStamp)}
               </h4>
             </div>
           </div>
@@ -86,6 +104,7 @@ const SellerStatistics = () => {
           {/* Total Sales Graph */}
           <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md overflow-hidden xl:col-span-2">
             {/* Render Chart Here */}
+            <SellerChart data={sellerStatsData?.chartData}/>
           </div>
           {/* Calender */}
           <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md overflow-hidden">

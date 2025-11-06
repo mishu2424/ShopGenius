@@ -3,9 +3,25 @@ import { FaDollarSign } from "react-icons/fa";
 import { BsFillCartPlusFill } from "react-icons/bs";
 import { GiPlayerTime } from "react-icons/gi";
 import { Helmet } from "react-helmet-async";
-import 'react-date-range/dist/styles.css'; // main css file
-import 'react-date-range/dist/theme/default.css'; // theme css file
+import "react-date-range/dist/styles.css"; // main css file
+import "react-date-range/dist/theme/default.css"; // theme css file
+import { useQuery } from "@tanstack/react-query";
+import { axiosSecure } from "../../../hooks/useAxiosSecure";
+import LoadingSpinner from "../../../components/Shared/LoadingSpinner";
+import { formatDistanceToNow } from "date-fns";
+import SalesLineChart from "../../../components/Shared/Chart/SalesLineChart";
 const UserStatistics = () => {
+  const { data: guestChartData, isLoading } = useQuery({
+    queryKey: ["guest-stats"],
+    queryFn: async () => {
+      const { data } = await axiosSecure("/guest-stats");
+      return data;
+    },
+  });
+
+  console.log(guestChartData);
+
+  if (isLoading) return <LoadingSpinner />;
   return (
     <div>
       <Helmet>
@@ -26,7 +42,7 @@ const UserStatistics = () => {
                 Total Spent
               </p>
               <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
-                $343
+                ${guestChartData?.totalSales}
               </h4>
             </div>
           </div>
@@ -43,7 +59,7 @@ const UserStatistics = () => {
                 Total Bookings
               </p>
               <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
-                34
+                {guestChartData?.totalBookings}
               </h4>
             </div>
           </div>
@@ -60,7 +76,7 @@ const UserStatistics = () => {
                 Guest Since...
               </p>
               <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
-                3 Days
+                {formatDistanceToNow(guestChartData?.timeStamp)}
               </h4>
             </div>
           </div>
@@ -70,6 +86,13 @@ const UserStatistics = () => {
           {/* Total Sales Graph */}
           <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md overflow-hidden xl:col-span-2">
             {/* Render Chart Here */}
+            {guestChartData?.chartData.length > 1 ? (
+              <SalesLineChart data={guestChartData?.chartData} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <h4 className="text-base text-red-500">No data available!!!</h4>
+              </div>
+            )}
           </div>
           {/* Calender */}
           <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md overflow-hidden">

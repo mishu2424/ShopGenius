@@ -6,15 +6,35 @@ import { useMutation } from "@tanstack/react-query";
 import { axiosSecure } from "../../../hooks/useAxiosSecure";
 import LoadingSpinner from "../../../components/Shared/LoadingSpinner";
 import { Helmet } from "react-helmet-async";
+import { FaSpinner } from "react-icons/fa6";
+import GooglePlacesAutocomplete from "react-google-places-autocomplete";
+import useMyLocation from "../../../hooks/useMyLocation";
+import { useEffect } from "react";
 
 const AddProduct = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
+  const [loc, setLoc] = useState();
+
+  const [locError, setLocError] = useState("");
+
   // sale controls
   const [onSale, setOnSale] = useState(false);
   const [discountType, setDiscountType] = useState("percentage"); // "percentage" | "flat"
   const [discountValue, setDiscountValue] = useState(""); // string for input control
+
+  const { location, error, getLocation } = useMyLocation();
+
+  // ✅ when hook resolves, prefill the autocomplete
+  useEffect(() => {
+    if (location?.address) {
+      setLoc({ label: location.address, value: location });
+    }
+    console.log(location);
+  }, [location]);
+
+  console.log(loc);
 
   // colors control
   const [colors, setColors] = useState([
@@ -88,6 +108,7 @@ const AddProduct = () => {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setLocError("");
 
     try {
       const form = new FormData(e.target);
@@ -103,7 +124,7 @@ const AddProduct = () => {
       const stock = parseInt(form.get("stock"));
       const sellerName = form.get("name");
       const storeName = form.get("storeName");
-      const location = form.get("location");
+      const location = loc?.label;
 
       if (Number.isNaN(price) || price < 0) {
         toast.error("Please enter a valid price.");
@@ -153,6 +174,10 @@ const AddProduct = () => {
           return { name: c.name, colorCode: c.colorCode, image: uploaded };
         })
       );
+      if (!loc?.label) {
+        setLocError("Please provide an address!");
+        return toast.error("Please enter a valid address");
+      }
 
       const newProduct = {
         productId,
@@ -450,21 +475,51 @@ const AddProduct = () => {
               required
               className="input input-bordered w-full"
             />
-            <input
-              type="text"
-              name="location"
-              placeholder="Location (e.g. Toronto, ON)"
-              required
-              className="input input-bordered w-full"
-            />
+            <div>
+              <GooglePlacesAutocomplete
+                apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+                selectProps={{
+                  loc,
+                  onChange: setLoc,
+                  placeholder: "Store Location",
+                  styles: {
+                    control: (base) => ({
+                      ...base,
+                      borderColor: "#ccc",
+                      borderRadius: "8px",
+                      padding: "2px",
+                      margin: "0px",
+                    }),
+                  },
+                }}
+              />
+              {loc && (
+                <div className="mt-4 p-3 bg-gray-100 rounded">
+                  <p className="text-sm">
+                    {" "}
+                    <span className="font-bold text-xs">
+                      Current delivery location:
+                    </span>{" "}
+                    {loc?.label}
+                  </p>
+                </div>
+              )}
+              {locError && <span>{locError}</span>}
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="btn bg-[#2381D3] hover:bg-[#105a9b] text-white w-full mt-4"
+            className="btn bg-[#2381D3] hover:bg-[#105a9b] text-white w-full mt-4 disabled:bg-blue-100"
           >
-            {loading ? "Adding Product..." : "Add Product"}
+            {loading ? (
+              <span>
+                "Adding Product..." <FaSpinner />
+              </span>
+            ) : (
+              "Add Product"
+            )}
           </button>
         </form>
       </div>

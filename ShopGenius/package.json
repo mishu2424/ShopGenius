@@ -27,6 +27,7 @@
     "react": "^19.1.1",
     "react-date-range": "^2.0.1",
     "react-dom": "^19.1.1",
+    "react-google-charts": "^5.2.1",
     "react-google-places-autocomplete": "^4.1.0",
     "react-helmet-async": "^2.0.5",
     "react-hot-toast": "^2.6.0",
