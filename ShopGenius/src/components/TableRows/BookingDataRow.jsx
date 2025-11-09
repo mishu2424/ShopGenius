@@ -127,15 +127,15 @@ const BookingDataRow = ({ order, refetch, dashboardStatus }) => {
               <img
                 alt="profile"
                 src={order?.selectedImage}
-                className="mx-auto object-cover rounded h-10 w-15 "
+                className="mx-auto object-cover rounded hidden lg:flex h-10 w-15 "
               />
             </div>
           </div>
           <div className="ml-3">
             <Link to={`/product/${order?.productBookingId}`}>
-              <p className="text-gray-900 whitespace-no-wrap link-hover hover:text-blue-400">
+              <p className="text-gray-900 whitespace-no-wrap text-xs md:text-base link-hover hover:text-blue-400">
                 {order?.title}
-                <span className="inline-flex ml-1 text-xs text-green-900 bg-green-100 p-2 font-semibold">
+                <span className="inline-flex ml-1 text-xs text-green-900 text-xs md:text-base bg-green-100 p-2 font-semibold">
                   {" "}
                   (Current Status:
                   {order?.deliveryStatus === "Left-the-warehouse"
@@ -149,13 +149,13 @@ const BookingDataRow = ({ order, refetch, dashboardStatus }) => {
         </div>
       </td>
       <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-        <div className="flex items-center">
+        <div className="flex items-center flex-col lg:flex-row">
           <div className="flex-shrink-0">
             <div className="block relative">
               <img
                 alt="profile"
                 src={order?.user?.photoURL}
-                className="mx-auto object-cover rounded h-10 w-15 "
+                className="mx-auto object-cover rounded-full h-8 w-8 md:h-10 md:w-15"
               />
             </div>
           </div>

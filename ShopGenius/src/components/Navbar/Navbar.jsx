@@ -122,7 +122,7 @@ const Navbar = ({ navbarRef }) => {
                     </div>
                     <ul
                       tabIndex="-1"
-                      className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow"
+                      className="menu menu-sm dropdown-content bg-base-100 text-black rounded-box z-1 w-52 p-2 shadow"
                     >
                       {user && user?.email && (
                         <li>

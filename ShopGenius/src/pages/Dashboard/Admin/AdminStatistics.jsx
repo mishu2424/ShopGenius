@@ -17,7 +17,7 @@ const AdminStatistics = () => {
     },
   });
 
-  console.log(adminChartData);
+  // console.log(adminChartData);
 
   if (isLoading) return <LoadingSpinner />;
   return (

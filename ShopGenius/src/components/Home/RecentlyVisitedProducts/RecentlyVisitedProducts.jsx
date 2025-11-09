@@ -1,11 +1,9 @@
-import React from "react";
-import useRecentBoughtProducts from "../../../hooks/useRecentBoughtProducts";
-import Container from "../../Shared/Container";
+import React, { useState } from "react";
+import useAuth from "../../../hooks/useAuth";
 import LoadingSpinner from "../../Shared/LoadingSpinner";
 import Title from "../../Shared/Title";
-import { HiMiniCheckBadge } from "react-icons/hi2";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { useState } from "react";
+import { Link } from "react-router-dom";
 // Import Swiper styles
 import "swiper/css";
 import "swiper/css/effect-fade";
@@ -13,43 +11,38 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 // import required modules
 import { EffectFade, Navigation, Pagination } from "swiper/modules";
-import { IoIosArrowDropleft, IoIosArrowDropright } from "react-icons/io";
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { axiosSecure } from "../../../hooks/useAxiosSecure";
-import useAuth from "../../../hooks/useAuth";
+import { FaProductHunt } from "react-icons/fa6";
 import {
   MdOutlineKeyboardArrowLeft,
   MdOutlineKeyboardArrowRight,
 } from "react-icons/md";
-const RecentBoughtCategories = () => {
-  const { user } = useAuth() || {};
-  const [activeIndex, setActiveIndex] = useState(0);
-  const { data: recentBoughtProducts, isLoading: isBoughtProductsLoading } =
-    useQuery({
-      queryKey: ["suggestions", user?.email],
-      enabled: !!user?.email,
-      queryFn: async () => {
-        const { data } = await axiosSecure(
-          `/recent-bought?recentBoughtCat=${true}`
-        );
-        return data;
-      },
-    });
+import Container from "../../Shared/Container";
+import useRecentlyViewed from "../../../hooks/useRecentlyViewed";
 
-  if (isBoughtProductsLoading) return <LoadingSpinner />;
+const RecentlyVisitedProducts = () => {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const { recentProducts } = useRecentlyViewed();
+  console.log(recentProducts);
+
+
+  // Don't show anything if there are no recently viewed products
+  if (!recentProducts || recentProducts.length === 0) {
+    return null;
+  }
+
   return (
     <>
-      {recentBoughtProducts?.length > 0 && (
+      {!recentProducts || recentProducts.length > 0 ? (
         <Container>
           <div className="relative">
             <Title
-              title={"Suggested Products"}
+              title={"Recent Visited Products"}
               borderColor={"border-blue-500"}
-              icon={HiMiniCheckBadge}
+              icon={FaProductHunt}
               iconColor={"text-blue-500"}
             />
-            {/* <div className="border"> */}
+            <div className="mt-10">
             <Swiper
               slidesPerView={1}
               spaceBetween={10}
@@ -58,8 +51,8 @@ const RecentBoughtCategories = () => {
                 clickable: true,
               }}
               navigation={{
-                nextEl: ".custom-next-btn4",
-                prevEl: ".custom-prev-btn4",
+                nextEl: ".custom-next-btn5",
+                prevEl: ".custom-prev-btn5",
               }}
               breakpoints={{
                 640: {
@@ -82,9 +75,9 @@ const RecentBoughtCategories = () => {
               onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)} // 👈 Track active slide
               className="mySwiper custom-swiper"
             >
-              {recentBoughtProducts.map((product) => (
+              {recentProducts.map((product) => (
                 <SwiperSlide>
-                  <Link to={`/product/${product?._id}`}>
+                  <Link to={`/product/${product?.productId}`}>
                     <div
                       key={product?._id}
                       className="w-full max-w-xs mx-auto md:mx-5 overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800 my-3 hover:scale-105 duration-300 border border-transparent hover:border-blue-500"
@@ -134,9 +127,10 @@ const RecentBoughtCategories = () => {
                 </SwiperSlide>
               ))}
             </Swiper>
+            </div>
             <button
-              className={`custom-prev-btn4
-            absolute top-2 right-12
+              className={`custom-prev-btn5
+            absolute top-10 right-12
             w-9 h-9 grid place-items-center rounded shadow border z-40 transition
             lg:top-36 lg:left-8 lg:right-auto
             lg:w-auto lg:h-auto lg:py-5 lg:px-4
@@ -152,8 +146,8 @@ const RecentBoughtCategories = () => {
 
             {/* Next: mobile/tablet top-right corner; desktop original */}
             <button
-              className="custom-next-btn4
-            absolute top-2 right-2
+              className="custom-next-btn5
+            absolute top-10 right-2
             w-9 h-9 grid place-items-center rounded shadow border z-40
             bg-blue-600 text-white hover:bg-blue-500 transition
             lg:top-36 lg:right-8
@@ -164,9 +158,11 @@ const RecentBoughtCategories = () => {
             </button>
           </div>
         </Container>
+      ) : (
+        ""
       )}
     </>
   );
 };
 
-export default RecentBoughtCategories;
+export default RecentlyVisitedProducts;

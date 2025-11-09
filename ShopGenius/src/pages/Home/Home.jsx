@@ -4,6 +4,7 @@ import BestSeller from "../../components/Home/BestSeller/BestSeller";
 import DiscountedProducts from "../../components/Home/DiscountedProducts";
 import PremiumMembership from "../../components/Home/PremiumMembership/PremiumMembership";
 import RecentBoughtCategories from "../../components/Home/RecentBoughtCategories/RecentBoughtCategories";
+import RecentlyVisitedProducts from "../../components/Home/RecentlyVisitedProducts/RecentlyVisitedProducts";
 
 
 const Home = () => {
@@ -17,6 +18,7 @@ const Home = () => {
       <DiscountedProducts />
       <BestSeller />
       <RecentBoughtCategories/>
+      <RecentlyVisitedProducts/>
       <PremiumMembership />
     </div>
   );

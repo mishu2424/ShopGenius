@@ -104,7 +104,13 @@ const SellerStatistics = () => {
           {/* Total Sales Graph */}
           <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md overflow-hidden xl:col-span-2">
             {/* Render Chart Here */}
-            <SellerChart data={sellerStatsData?.chartData}/>
+            {sellerStatsData?.chartData.length > 1 ? (
+              <SellerChart data={sellerStatsData?.chartData} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <h4 className="text-base text-red-500">No data available!!!</h4>
+              </div>
+            )}
           </div>
           {/* Calender */}
           <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md overflow-hidden">

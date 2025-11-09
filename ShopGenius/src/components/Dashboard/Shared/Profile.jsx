@@ -154,7 +154,7 @@ const Profile = () => {
                 <span className="font-bold text-black ">{user?.email}</span>
               </p>
 
-              <div>
+              <div className="mt-3">
                 <button
                   onClick={() => setIsOpen(true)}
                   className="bg-[#2381D3] px-10 py-1 rounded-lg text-white cursor-pointer hover:bg-[#2381D3] block mb-1"

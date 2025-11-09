@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import registerLottieData from "../../assets/Sign up.json";
@@ -9,16 +9,26 @@ import useAuth from "../../hooks/useAuth";
 import toast from "react-hot-toast";
 import { ImageBBUpload } from "../../api/utilities";
 import { sendEmailVerification } from "firebase/auth";
+import {
+  loadCaptchaEnginge,
+  LoadCanvasTemplate,
+  validateCaptcha,
+} from "react-simple-captcha";
 
 const SignUp = () => {
   const [passwordToggle, setPasswordToggle] = useState(false);
   const [userSignInLoading, setUserSignInLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [passError, setPassError] = useState(false);
+  const captchaRef = useRef(null);
   const { signInWithGoogle, createUser, updateUserProfile, logOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
+
+  useEffect(() => {
+    loadCaptchaEnginge(6);
+  }, []);
 
   // handle google sign-up
   const handleGoogleSignIn = async () => {
@@ -46,30 +56,36 @@ const SignUp = () => {
       return;
     }
     const confirmPassword = form.get("confirm-password");
+    const user_captcha = form.get("user_captcha");
+
     const name = form.get("name");
     const photoURL = form.get("photoURL");
-    try {
-      setUserSignInLoading(true);
-      if (password !== confirmPassword)
-        return toast.error("Passwords did not match!");
-      const img = await ImageBBUpload(photoURL);
-      const result = await createUser(email, password);
-      await updateUserProfile(name, img);
-      // If they used email/password and haven't verified, stop here
-      if (!result.user.emailVerified) {
-        await sendEmailVerification(result.user); // optional: resend
-        await logOut(); // make sure they’re logged out
-        toast.success(
-          "Verification email sent! Please verify before logging in."
-        );
-        return navigate("/login");
-      }
+    if (validateCaptcha(user_captcha, false)) {
+      try {
+        setUserSignInLoading(true);
+        if (password !== confirmPassword)
+          return toast.error("Passwords did not match!");
+        const img = await ImageBBUpload(photoURL);
+        const result = await createUser(email, password);
+        await updateUserProfile(name, img);
+        // If they used email/password and haven't verified, stop here
+        if (!result.user.emailVerified) {
+          await sendEmailVerification(result.user); // optional: resend
+          await logOut(); // make sure they’re logged out
+          toast.success(
+            "Verification email sent! Please verify before logging in."
+          );
+          return navigate("/login");
+        }
 
-      navigate(from);
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setUserSignInLoading(false);
+        navigate(from);
+      } catch (err) {
+        toast.error(err.message);
+      } finally {
+        setUserSignInLoading(false);
+      }
+    } else {
+      return toast.error("Captcha Does Not Match");
     }
   };
   return (
@@ -249,6 +265,20 @@ const SignUp = () => {
                 </ul>
               </div>
             )}
+
+            <div className="relative mt-4">
+              <label className="label">
+                <LoadCanvasTemplate reloadText="Reload Captcha" />
+              </label>
+              <input
+                ref={captchaRef}
+                type="text"
+                name="user_captcha"
+                className="block w-full px-10 py-3 text-gray-700 bg-white border rounded-lg dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 dark:focus:border-blue-300 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
+                placeholder="Write the text above"
+                required
+              />
+            </div>
 
             <div className="mt-6">
               <button

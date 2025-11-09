@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import useCart from "../../hooks/useCart";
 import { Helmet } from "react-helmet-async";
 import BookingModal from "../Modal/BookingModal";
+import useRecentlyViewed from "../../hooks/useRecentlyViewed";
 
 const ProductDetails = () => {
   const axiosCommon = useAxiosCommon();
@@ -19,6 +20,7 @@ const ProductDetails = () => {
   const [, , refetch] = useCart();
   const { id } = useParams();
   const location = useLocation();
+  const { addToRecentlyViewed } = useRecentlyViewed();
 
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const openModal = () => {
@@ -33,13 +35,24 @@ const ProductDetails = () => {
     setIsBookingModalOpen(false);
   };
 
-  const { data: product, isLoading, refetch:productDataRefetch } = useQuery({
+  const {
+    data: product,
+    isLoading,
+    refetch: productDataRefetch,
+  } = useQuery({
     queryKey: ["product-details", id],
     queryFn: async () => {
       const { data } = await axiosCommon(`/product/details/${id}`);
       return data;
     },
   });
+
+  //save visited product info
+  useEffect(() => {
+    if (id) {
+      addToRecentlyViewed(product);
+    }
+  }, [id, product]);
 
   const [colorIndex, setColorIndex] = useState(0);
   const [imageIndex, setImageIndex] = useState(0);
@@ -75,7 +88,7 @@ const ProductDetails = () => {
   const { mutateAsync: cartMutateAsync } = useMutation({
     mutationKey: ["user-cart"],
     mutationFn: async (cart) => {
-      const { data } = await axiosSecure.post("/cart", {cart});
+      const { data } = await axiosSecure.post("/cart", { cart });
       return data;
     },
     onSuccess: () => {
@@ -86,12 +99,12 @@ const ProductDetails = () => {
   const handleAddToCart = async () => {
     console.log(totalPrice);
     if (user && user?.email) {
-      if(user?.email===product?.seller?.email){
-        return toast.error("You can not save your own product in the cart")
+      if (user?.email === product?.seller?.email) {
+        return toast.error("You can not save your own product in the cart");
       }
       const cart = {
         ...product,
-        source:"Product-details",
+        source: "Product-details",
         productBookingId: product?._id,
         selectedColor: selectedColor?.name,
         selectedImage: currentImg,
@@ -100,7 +113,7 @@ const ProductDetails = () => {
         userInfo: {
           name: user?.displayName || "unknown",
           email: user?.email,
-          photoURL:user?.photoURL,
+          photoURL: user?.photoURL,
         },
         // productId: product?._id,
         // orderQuantity: quantity,

@@ -298,6 +298,17 @@ async function run() {
       next();
     };
 
+    const verifyAdminOrSeller = async (req, res, next) => {
+      const { email } = req?.user;
+
+      const result = await userCollection.findOne({ email });
+      if (!result || result.role === "user") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+
+      next();
+    };
+
     // products
     app.get("/products", async (req, res) => {
       const page = parseInt(req?.query?.page) || 1;
@@ -429,6 +440,169 @@ async function run() {
         updatedDoc
       );
       res.send(result);
+    });
+
+    //recently-visited product
+    app.get("/user/recently-viewed", verifyToken, async (req, res) => {
+      try {
+        const { email } = req?.user;
+
+        if (!email) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const user = await userCollection.findOne(
+          { email },
+          { projection: { recentlyViewed: 1 } }
+        );
+
+        if (!user || !user.recentlyViewed || user.recentlyViewed.length === 0) {
+          return res.json([]);
+        }
+
+        const productIds = user.recentlyViewed.map(
+          (item) => new ObjectId(item.productId)
+        );
+
+        const products = await productCollection
+          .find({ _id: { $in: productIds } })
+          .toArray();
+
+        //merge product data with view timeStamp, maintain order
+        const result = user?.recentlyViewed
+          .map((viewedItem) => {
+            const product = products.find((p) => {
+              return p._id.toString() === viewedItem.productId;
+            });
+
+            if (product) {
+              return {
+                ...product,
+                viewedAt: viewedItem.viewedAt,
+              };
+            }
+            return null;
+          })
+          .filter(Boolean);
+
+        res.json(result);
+      } catch (err) {
+        console.error("Error fetching recently viewed:", err.message);
+        res.status(500).json({ message: "Failed to fetch recently viewed" });
+      }
+    });
+
+    //add a product to recently viewed
+    app.post("/user/recently-viewed", verifyToken, async (req, res) => {
+      try {
+        const { email } = req?.user;
+        const { productId, viewedAt } = req.body;
+
+        if (!email) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        if (!productId) {
+          return res.status(400).json({ message: "Product ID is required" });
+        }
+
+        await userCollection.updateOne(
+          { email },
+          {
+            $pull: {
+              recentlyViewed: { productId: productId },
+            },
+          }
+        );
+
+        //add to the beginning of the array
+        const result = await userCollection.updateOne(
+          { email },
+          {
+            $push: {
+              recentlyViewed: {
+                $each: [{ productId, viewedAt: viewedAt || new Date() }],
+                $position: 0, //add to beginning
+                $slice: 20, // keep only first 20 items
+              },
+            },
+          },
+          { upsert: true } // Create user document if doesn't exist
+        );
+
+        res.json({
+          success: true,
+          message: "Added to recently viewed",
+          result,
+        });
+      } catch (err) {
+        console.error("Error adding recently viewed:", err.message);
+        res.status(500).json({ message: "Failed to fetch recently viewed" });
+      }
+    });
+
+    // POST - Sync localStorage data to backend (when user logs in)
+    app.post("/user/sync-recently-viewed", verifyToken, async (req, res) => {
+      try {
+        const { email } = req?.user;
+        const { products } = req?.body;
+
+        if (!email) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        if (!products || !Array.isArray(products)) {
+          return res.status(400).json({ message: "Invalid products data" });
+        }
+
+        //get existing recently viewed
+        const user = await userCollection.findOne(
+          { email },
+          { projection: { recentlyViewed: 1 } }
+        );
+
+        const existingViewed = user?.recentlyViewed || [];
+
+        //convert localstorage format to DB format
+        const newViewed = products.map((p) => ({
+          productId: p.productId,
+          viewedAt: p.viewedAt || new Date(),
+        }));
+
+        //Merge: Keep existing, add new ones that don't exist
+        const merged = [...newViewed];
+
+        existingViewed.forEach((existing) => {
+          // if it already exists in the db or not
+          const alreadyExists = merged.some(
+            (item) => item.productId === existing.productId
+          );
+          // if it does not push the new data
+          if (!alreadyExists) {
+            merged.push(existing);
+          }
+        });
+
+        // Sort by viewedAt (most recent first) and limit to 20
+        merged.sort((a, b) => new Date(b.viewedAt) - new Date(a.viewedAt));
+        const limited = merged.slice(0, 20);
+
+        // Update user document
+        await userCollection.updateOne(
+          { email },
+          { $set: { recentlyViewed: limited } },
+          { upsert: true }
+        );
+
+        res.json({
+          success: true,
+          message: "Recently viewed synced",
+          count: limited.length,
+        });
+      } catch (err) {
+        console.error("Error syncing recently viewed:", err.message);
+        res.status(500).json({ message: "Failed to sync recently viewed" });
+      }
     });
 
     // payments
@@ -843,7 +1017,7 @@ async function run() {
       });
     });
 
-    app.get(`/my-orders/:email`, async (req, res) => {
+    app.get(`/my-orders/:email`, verifyToken, async (req, res) => {
       const email = req?.params?.email;
       console.log(req?.params);
       const result = await bookingCollection
@@ -852,7 +1026,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete(`/cancel-order/:id`, async (req, res) => {
+    app.delete(`/cancel-order/:id`, verifyToken, async (req, res) => {
       const id = req?.params?.id;
       const result = await bookingCollection.deleteOne({
         _id: new ObjectId(id),
@@ -864,7 +1038,7 @@ async function run() {
     // stats
 
     // seller-stats
-    app.get("/seller-stats", verifyToken, async (req, res) => {
+    app.get("/seller-stats", verifyToken, verifySeller, async (req, res) => {
       const { email } = req?.user;
 
       const totalProducts = await productCollection.countDocuments({
@@ -947,38 +1121,53 @@ async function run() {
       });
     });
 
-    app.get(`/my-products/:email`, async (req, res) => {
-      const email = req?.params?.email;
-      const result = await productCollection
-        .find({ "seller.email": email })
-        .toArray();
-      res.send(result);
-    });
+    app.get(
+      `/my-products/:email`,
+      verifyToken,
+      verifySeller,
+      async (req, res) => {
+        const email = req?.params?.email;
+        const result = await productCollection
+          .find({ "seller.email": email })
+          .toArray();
+        res.send(result);
+      }
+    );
 
-    app.patch(`/update-product/:id`, async (req, res) => {
-      const id = req?.params?.id;
-      const product = req?.body;
-      const updatedDoc = {
-        $set: {
-          ...product,
-          timeStamp: Date.now(),
-        },
-      };
-      const result = await productCollection.updateOne(
-        { _id: new ObjectId(id) },
-        updatedDoc
-      );
-      res.send(result);
-    });
+    app.patch(
+      `/update-product/:id`,
+      verifyToken,
+      verifySeller,
+      async (req, res) => {
+        const id = req?.params?.id;
+        const product = req?.body;
+        const updatedDoc = {
+          $set: {
+            ...product,
+            timeStamp: Date.now(),
+          },
+        };
+        const result = await productCollection.updateOne(
+          { _id: new ObjectId(id) },
+          updatedDoc
+        );
+        res.send(result);
+      }
+    );
 
-    app.delete(`/delete-room/:id`, async (req, res) => {
-      const { reason } = req?.query;
-      const id = req?.params?.id;
-      const result = await productCollection.deleteOne({
-        _id: new ObjectId(id),
-      });
-      res.send(result);
-    });
+    app.delete(
+      `/delete-room/:id`,
+      verifyToken,
+      verifyAdminOrSeller,
+      async (req, res) => {
+        const { reason } = req?.query;
+        const id = req?.params?.id;
+        const result = await productCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+        res.send(result);
+      }
+    );
 
     app.get(`/manage-orders/:email`, async (req, res) => {
       const email = req?.params?.email;
@@ -1008,7 +1197,7 @@ async function run() {
     // stats
 
     // admin-stats
-    app.get("/admin-stats", verifyToken, async (req, res) => {
+    app.get("/admin-stats", verifyToken, verifyAdmin, async (req, res) => {
       const { email } = req?.user;
 
       const bookings = await bookingCollection
@@ -1034,33 +1223,39 @@ async function run() {
 
       const totalUsers = await userCollection.countDocuments({});
 
+      const chartData = [["Month", "Month Sales", "Total Orders"]];
 
-      const chartData=[["Month","Month Sales","Total Orders"]]
-
-      const pipeline=[
-        {$project:{
-          date:{$toDate:"$date"},
-          price:{$toDouble:"$totalPrice"},
-          sold:{$toInt:"$sold_count"}
-        }},
+      const pipeline = [
         {
-          $group:{
-            _id:{$dateTrunc:{date:"$date",unit:"month",timezone:"UTC"}},
-            totalSales:{$sum:"$price"},
-            totalSold:{$sum:"$sold"},
-            totalOrders:{$sum:1}
-          }
+          $project: {
+            date: { $toDate: "$date" },
+            price: { $toDouble: "$totalPrice" },
+            sold: { $toInt: "$sold_count" },
+          },
         },
-        {$sort:{_id:1}}
+        {
+          $group: {
+            _id: {
+              $dateTrunc: { date: "$date", unit: "month", timezone: "UTC" },
+            },
+            totalSales: { $sum: "$price" },
+            totalSold: { $sum: "$sold" },
+            totalOrders: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
       ];
-      const rows=await bookingCollection.aggregate(pipeline).toArray();
-      chartData.push(...rows.map(r=>{
-        const month=new Date(r._id).getUTCMonth() + 1;
-        console.log(r._id);
-        const year=new Date(r._id).getUTCFullYear();
-        const fullDate=`${year}/${month}`;
-        console.log(fullDate);
-        return [fullDate,Number(r.totalSales),Number(r.totalOrders)]}))
+      const rows = await bookingCollection.aggregate(pipeline).toArray();
+      chartData.push(
+        ...rows.map((r) => {
+          const month = new Date(r._id).getUTCMonth() + 1;
+          console.log(r._id);
+          const year = new Date(r._id).getUTCFullYear();
+          const fullDate = `${year}/${month}`;
+          console.log(fullDate);
+          return [fullDate, Number(r.totalSales), Number(r.totalOrders)];
+        })
+      );
 
       const totalSales = bookings.reduce(
         (acc, booking) => acc + Number(booking?.totalPrice),
@@ -1072,11 +1267,11 @@ async function run() {
         timeStamp,
         totalUsers,
         totalSales,
-        chartData
+        chartData,
       });
     });
 
-    app.patch("/update-user-role/:email", async (req, res) => {
+    app.patch("/update-user-role/:email", verifyAdmin, async (req, res) => {
       const email = req?.params?.email;
       const { selectedRole } = req?.body;
       const query = { email };
