@@ -9,9 +9,10 @@ import { useMutation } from "@tanstack/react-query";
 import LoadingSpinner from "./LoadingSpinner";
 import SplashScreen from "./SplashScreen";
 import useCart from "../../hooks/useCart";
+import { FaLeftLong, FaRightLong } from "react-icons/fa6";
 const PaymentSuccess = () => {
   const [loading, setLoading] = useState(true);
-  const [carts,isCartLoading,refetch]=useCart();
+  const [carts, isCartLoading, refetch] = useCart();
 
   // update quantity
   const { mutateAsync: updateQuantityStatus, isPending: isUpdatingStatus } =
@@ -73,7 +74,9 @@ const PaymentSuccess = () => {
         // If multiple items => create one "batch" booking or multiple docs — your choice.
         // Example: one booking doc that contains all items:
         const bookingDoc = {
-          date: new Date(),
+          date: new Date().toLocaleString("en-US", {
+            timeZone: "America/Toronto",
+          }),
           transactionId: paymentIntentId,
           currency: session.currency,
           deliveryStatus: "Pending",
@@ -106,6 +109,7 @@ const PaymentSuccess = () => {
         toast.success("Payment Successful!");
       } catch (err) {
         console.error(err);
+        console.log(err);
         toast.error("Could not complete booking save.");
       } finally {
         setLoading(false);
@@ -113,17 +117,24 @@ const PaymentSuccess = () => {
     })();
   }, []);
   // toast.success("Payment Successful!");
-  if (loading || isCartLoading) return <LoadingSpinner/>;
+  if (loading || isCartLoading) return <LoadingSpinner />;
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center">
-      <div className="w-72">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-green-50/50">
+      <div className="w-72 flex flex-col items-center px-20 py-10 justify-center bg-white">
         <Lottie animationData={paymentSuccess} loop={true}></Lottie>
+        <div className="flex flex-col items-center justify-center gap-3 mt-5 text-xs text-gray-500">
+          <Link to={`/dashboard/my-orders`}>
+            <span className="rounded-md cursor-pointer">
+              <FaRightLong className="inline-block"/> Go To Orders
+            </span>
+          </Link>
+          <Link to={`/products`}>
+            <button className="rounded-md cursor-pointer">
+              <FaLeftLong className="inline-block"/> Go Back To Main Menu
+            </button>
+          </Link>
+        </div>
       </div>
-      <Link to={`/dashboard/my-orders`}>
-        <button className="btn py-2 px-6 bg-green-800 text-white rounded-md cursor-pointer">
-          Orders
-        </button>
-      </Link>
     </div>
   );
 };

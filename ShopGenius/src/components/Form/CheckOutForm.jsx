@@ -172,14 +172,15 @@ const CheckOutForm = ({
         user: {
           email: user?.email,
           name: user?.displayName,
-          photoURL: user?.photoURL
+          photoURL: user?.photoURL,
         },
+        seller: bookingInfo?.seller,
         deliveryStatus: "Pending",
-        deliveryInformation:{
-          address:value,
+        deliveryInformation: {
+          address: value,
           comment,
-          deliveryPreference
-        }
+          deliveryPreference,
+        },
       };
       // console.log(booking);
 
@@ -197,7 +198,7 @@ const CheckOutForm = ({
     }
   };
 
-  console.log(bookingInfo);
+  // console.log(bookingInfo);
 
   if (isUpdatingBooking || isUpdatingStatus) return <LoadingSpinner />;
   return (
@@ -227,7 +228,7 @@ const CheckOutForm = ({
           {processing ? (
             <ImSpinner9 className="animate-spin m-auto" />
           ) : (
-            `Pay $${bookingInfo?.totalPrice}`
+            `Pay $${(Number((bookingInfo?.totalPrice) + 7.49).toFixed(2))}`
           )}
         </button>
         <button

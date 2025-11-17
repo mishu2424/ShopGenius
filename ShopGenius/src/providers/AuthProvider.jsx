@@ -54,7 +54,7 @@ const AuthProvider = ({ children }) => {
   };
 
   const updateUserProfile = (name, photo) => {
-    console.log(name,photo);
+    console.log(name, photo);
     return updateProfile(auth.currentUser, {
       displayName: name,
       photoURL: photo,
@@ -71,12 +71,15 @@ const AuthProvider = ({ children }) => {
   };
 
   const saveUser = async (user) => {
+    console.log('from save user',user);
     const newUser = {
       email: user?.email,
-      name: user?.displayName,
+      name: user?.displayName || null,
+      firebaseUid: user?.uid || null,
       status: "verified",
       role: "user",
     };
+    console.log(newUser);
 
     try {
       await axios.put(`${import.meta.env.VITE_API_URL}/users`, newUser);

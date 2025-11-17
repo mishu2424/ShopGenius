@@ -148,11 +148,11 @@ const Carts = () => {
 
       const sortedCartItems = carts
         .filter((cart) => {
-          console.log(
-            cart?.availability?.available,
-            cart?.availability?.status,
-            cart?.availability.stock > cart?.quantity
-          );
+          // console.log(
+          //   cart?.availability?.available,
+          //   cart?.availability?.status,
+          //   cart?.availability.stock > cart?.quantity
+          // );
           if (!cart?.availability?.available) {
             toast.error(
               `You can not buy ${cart?.title} as it is either out of stock or not available at this moment! Remove this from before proceeding to checkout`

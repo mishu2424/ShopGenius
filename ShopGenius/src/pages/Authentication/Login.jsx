@@ -33,6 +33,8 @@ const Login = () => {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
 
+  console.log(from);
+
   // Focus password automatically when an email is remembered
   useEffect(() => {
     if (rememberMe) userPassRef.current?.focus();

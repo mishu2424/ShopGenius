@@ -25,16 +25,20 @@ import { useState } from "react";
 import useAuth from "../../hooks/useAuth";
 import useMyLocation from "../../hooks/useMyLocation";
 import { IoChevronDownCircleOutline } from "react-icons/io5";
+import useSubscription from "../../hooks/useSubscription";
+import LoadingSpinner from "../Shared/LoadingSpinner";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
   const [copied, setCopied] = useState(false);
-  const [comment, setComment]=useState("");
-  const [deliveryPreference, setDeliveryPreference]=useState("Leave at my door");
+  const [comment, setComment] = useState("");
+  const [deliveryPreference, setDeliveryPreference] =
+    useState("Leave at my door");
   const { location, getLocation } = useMyLocation();
   const [value, setValue] = useState(location?.address || null);
-  console.log(bookingInfo);
+  // console.log(bookingInfo);
+  const [subscription, userSubscriptionLoading] = useSubscription();
 
   const { user } = useAuth();
   // ✅ ask for location when the modal opens (or when not available yet)
@@ -56,6 +60,7 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
     setCopied(true);
   };
 
+  if (userSubscriptionLoading) return <LoadingSpinner />;
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={closeModal}>
@@ -133,7 +138,7 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
                     <div className="relative">
                       <Select
                         required
-                        onChange={(e)=>setDeliveryPreference(e.target.value)}
+                        onChange={(e) => setDeliveryPreference(e.target.value)}
                         className={clsx(
                           "mt-3 block w-full appearance-none rounded-lg border-none bg-black px-3 py-1.5 text-sm/6 text-white",
                           "focus:not-data-focus:outline-none data-focus:outline-2 data-focus:-outline-offset-2 data-focus:outline-white/25",
@@ -160,7 +165,7 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
                       Do you need let us know anything?
                     </Description>
                     <Textarea
-                      onChange={(e)=>setComment(e.target.value)}
+                      onChange={(e) => setComment(e.target.value)}
                       rows={3}
                       className={clsx(
                         "mt-3 block w-full resize-none rounded-lg border-none bg-black px-3 py-1.5 text-sm/6 text-white",
@@ -182,8 +187,27 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
                 </div>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
-                    Price: $ {bookingInfo?.totalPrice}
+                    Price: ${bookingInfo?.totalPrice}
                   </p>
+                </div>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    Delivery Fee: ${subscription?.hasSubscription ? 0 : 7.49}
+                  </p>
+                </div>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    Total: $
+                    {subscription?.hasSubscription
+                      ? bookingInfo?.totalPrice
+                      : Number(bookingInfo?.totalPrice) + 7.49}
+                  </p>
+                </div>
+
+                {/* apply coupon */}
+                <div className="mt-2 flex items-center justify-between">
+                 <input type="text" placeholder="Apply coupon" className="input input-bordered" />
+                 <button className="btn bg-amber-500 text-white">Apply</button>
                 </div>
                 <hr className="mt-8 text-gray-200" />
                 {/* Copy Test Card Info */}

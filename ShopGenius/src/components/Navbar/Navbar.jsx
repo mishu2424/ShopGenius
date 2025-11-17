@@ -9,13 +9,22 @@ import useCart from "../../hooks/useCart";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import { useContext } from "react";
 import { ProductContext } from "../../contexts/ProductContext";
+import useMyLocation from "../../hooks/useMyLocation";
+import { CiLocationOn } from "react-icons/ci";
+import moment from "moment";
+
 const Navbar = ({ navbarRef }) => {
   const [searchFocused, setSearchFocused] = useState(false);
+  const [time, setTime] = useState(null);
   const { user, logOut } = useAuth() || {};
+  const { location, getLocation } = useMyLocation();
   const [carts, isCartLoading] = useCart();
   const navigate = useNavigate();
+  const [value, setValue] = useState(location?.address || null);
   const { searchTxt, setSearchTxt, setCurrentPage, setCategory } =
     useContext(ProductContext);
+
+  // console.log(value);
 
   // // Optional: lock scroll while dimmed
   // useEffect(() => {
@@ -26,6 +35,25 @@ const Navbar = ({ navbarRef }) => {
   //   }
   //   return () => (document.body.style.overflow = "");
   // }, [searchFocused]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(moment().format("dddd, ll, h:mm:ss"));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!location) getLocation();
+    // console.log(location);
+  }, [location, getLocation]);
+
+  useEffect(() => {
+    if (location?.address) {
+      setValue({ label: location.address, value: location });
+    }
+    console.log(location);
+  }, [location]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -89,6 +117,7 @@ const Navbar = ({ navbarRef }) => {
                         <input
                           type="text"
                           defaultValue={searchTxt}
+                          placeholder="Search your product"
                           className="input border-r-0 w-40"
                           name="search"
                           onFocus={() => setSearchFocused(true)}
@@ -141,6 +170,17 @@ const Navbar = ({ navbarRef }) => {
                           <Link to={`login`}>Log in</Link>
                         )}
                       </li>
+                      <li>
+                        <div className="lg:mr-3 flex flex-col items-start justify-center lg:hidden">
+                          <h6 className="text-black text-xs lg:text-sm">
+                            {time ? time : ""}
+                          </h6>
+                          <div className="text-xs flex items-center gap-2 text-black font-semibold">
+                            <CiLocationOn className="text-black" />
+                            {value?.label && value.label}
+                          </div>
+                        </div>
+                      </li>
                     </ul>
                   </div>
                 </div>
@@ -152,12 +192,22 @@ const Navbar = ({ navbarRef }) => {
           </Link>
         </div>
         <div className="flex gap-2">
+          <div className="lg:mr-3 lg:flex flex-col items-start justify-center hidden">
+            <h6 className="text-white text-xs lg:text-sm">
+              {time ? time : ""}
+            </h6>
+            <div className="text-xs flex items-center gap-2 text-white font-semibold">
+              <CiLocationOn className="text-white" />
+              {value?.label && value.label}
+            </div>
+          </div>
           <form className="hidden md:flex" onSubmit={handleSearch}>
             <div className="flex items-center border border-gray-300 rounded-lg">
               <input
                 type="text"
                 name="search"
                 defaultValue={searchTxt}
+                placeholder="Search your product"
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => {
                   setSearchFocused(false);

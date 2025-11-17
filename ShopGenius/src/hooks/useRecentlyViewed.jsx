@@ -34,7 +34,7 @@ const useRecentlyViewed = () => {
     queryKey: ["recently-viewed", user?.email],
     queryFn: async () => {
       if (!user?.email) {
-        console.log('entered');
+        console.log("entered");
         return getLocalStorage();
       }
       const { data } = await axiosSecure("/user/recently-viewed");
@@ -84,11 +84,16 @@ const useRecentlyViewed = () => {
       //first get the already existing data
       let recentList = getLocalStorage();
 
-      //remove if already exists (to avoid duplicates)
-      recentList = recentList.slice(0, 10); //<- it will give 9 data
+      if (recentList && recentList.length > 0) {
+        recentList = recentList.filter(
+          (item) => item?.productId !== productData?.productId
+        );
+      }
 
       //add the new data to the front to make it 10 data total in localstorage
       recentList.unshift(productData);
+
+      // console.log(recentList);
 
       //slice it to keep max 10 data in localstorage
       recentList = recentList.slice(0, 10);

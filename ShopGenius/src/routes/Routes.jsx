@@ -23,6 +23,7 @@ import AdminStatistics from "../pages/Dashboard/Admin/AdminStatistics";
 import MyCarts from "../pages/Dashboard/User/MyCarts";
 import PaymentSuccess from "../components/Shared/PaymentSuccess";
 import PaymentFail from "../components/Shared/PaymentFail";
+import SubscriptionSuccess from "../components/Shared/SubscriptionSuccess";
 
 export const router = createBrowserRouter([
   {
@@ -61,6 +62,12 @@ export const router = createBrowserRouter([
             <PaymentFail />
           </PrivateRoute>
         ),
+      },
+      {
+        path:'/subscription-success',
+        element:<PrivateRoute>
+          <SubscriptionSuccess/>
+        </PrivateRoute>
       },
       {
         path: `/products`,

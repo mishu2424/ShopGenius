@@ -2,6 +2,7 @@ import { Calendar } from "react-date-range";
 import { FaDollarSign } from "react-icons/fa";
 import { BsFillCartPlusFill } from "react-icons/bs";
 import { GiPlayerTime } from "react-icons/gi";
+import { PiIdentificationBadgeFill } from "react-icons/pi";
 import { Helmet } from "react-helmet-async";
 import "react-date-range/dist/styles.css"; // main css file
 import "react-date-range/dist/theme/default.css"; // theme css file
@@ -10,6 +11,7 @@ import { axiosSecure } from "../../../hooks/useAxiosSecure";
 import LoadingSpinner from "../../../components/Shared/LoadingSpinner";
 import { formatDistanceToNow } from "date-fns";
 import SalesLineChart from "../../../components/Shared/Chart/SalesLineChart";
+import useSubscription from "../../../hooks/useSubscription";
 const UserStatistics = () => {
   const { data: guestChartData, isLoading } = useQuery({
     queryKey: ["guest-stats"],
@@ -19,9 +21,12 @@ const UserStatistics = () => {
     },
   });
 
-  console.log(guestChartData);
+  const [subscription, userSubscriptionLoading] = useSubscription();
 
-  if (isLoading) return <LoadingSpinner />;
+  console.log(subscription);
+  // console.log(guestChartData);
+
+  if (isLoading | userSubscriptionLoading) return <LoadingSpinner />;
   return (
     <div>
       <Helmet>
@@ -42,7 +47,7 @@ const UserStatistics = () => {
                 Total Spent
               </p>
               <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
-                ${guestChartData?.totalSales}
+                ${guestChartData?.totalSales.toFixed(2)}
               </h4>
             </div>
           </div>
@@ -80,6 +85,25 @@ const UserStatistics = () => {
               </h4>
             </div>
           </div>
+
+          {/* User subscription */}
+          {subscription?.hasSubscription && (
+            <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
+              <div
+                className={`bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr shadow-lg absolute -mt-4 grid h-16 w-16 place-items-center`}
+              >
+                <PiIdentificationBadgeFill className="w-6 h-6 " />
+              </div>
+              <div className="p-4 text-right">
+                <p className="block antialiased font-sans text-sm leading-normal font-normal text-blue-gray-600">
+                  Subscriber Since...
+                </p>
+                <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
+                  {formatDistanceToNow(subscription?.subscriptionStartDate)}
+                </h4>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="mb-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">

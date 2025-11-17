@@ -61,8 +61,8 @@ const BookingDataRow = ({ order, refetch, dashboardStatus }) => {
     e.preventDefault();
     setLoading(true);
     const reason = e.target.reason.value;
-    if (order?.deliveryStatus === "Left-the-world") {
-      return toast.error("You can not cancel it at this moment");
+    if (order?.deliveryStatus === "Left-the-warehouse") {
+      return toast.error("You can not cancel it at this moment as it already left the warehouse.");
     }
     try {
       await cancelOrderAsync(reason);

@@ -147,7 +147,7 @@ const ProductDetails = () => {
         toast.error(err.message);
       }
     } else {
-      navigate("/login");
+      navigate("/login", { state: { from: location }, replace: false });
     }
   };
 

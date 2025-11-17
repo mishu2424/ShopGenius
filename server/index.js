@@ -1,14 +1,14 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
-require("dotenv").config();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 const { randomUUID } = require("crypto"); // Node 16+
-const { timeStamp } = require("console");
-
+const { timeStamp, error } = require("console");
+const nodemailer = require("nodemailer");
 const port = process.env.PORT || 8000;
 
 // --- HOIST COLLECTION HANDLES HERE ---
@@ -20,103 +20,18 @@ let pendingCheckoutCollection;
 
 // middleware
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://shop-genius-auth.web.app",
+  ],
   credentials: true,
   optionSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 
 // payment webhook
-// app.post(
-//   "/webhooks/stripe",
-//   express.raw({ type: "application/json" }),
-//   async (req, res) => {
-//     const sig = req.headers["stripe-signature"];
-//     let event;
 
-//     try {
-//       event = stripe.webhooks.constructEvent(
-//         req.body,
-//         sig,
-//         process.env.STRIPE_WEBHOOK_SECRET
-//       );
-//     } catch (err) {
-//       return res.status(400).send(`Webhook Error: ${err.message}`);
-//     }
-
-//     try {
-//       switch (event.type) {
-//         case "checkout.session.completed": {
-//           const session = event.data.object;
-
-//           const paymentIntentId =
-//             typeof session.payment_intent === "string"
-//               ? session.payment_intent
-//               : session.payment_intent?.id;
-
-//           const lineItems = await stripe.checkout.sessions.listLineItems(
-//             session.id,
-//             { limit: 100 }
-//           );
-//           const booking = {
-//             amount_total: session.amount_total,
-//             currency: session?.currency,
-//             date: new Date(),
-//             transactionId: paymentIntentId,
-//             items: lineItems.data.map((li) => ({
-//               productBookingId: li?.productId,
-//               sold_count: li?.sold_count + li?.quantity,
-//               title: li?.title,
-//               brand: li?.brand,
-//               totalPrice: li?.totalPrice,
-//               user: {
-//                 name: li?.userName,
-//                 email: li?.userEmail,
-//                 photoURL: li?.userPhoto,
-//               },
-//             })),
-//             deliveryStatus: "Pending",
-//           };
-
-//           await bookingCollection.insertOne(booking);
-//           break;
-//         }
-//         case "payment_intent.succeeded": {
-//           // Alternative event if you use direct PI flows.
-//           break;
-//         }
-
-//         default:
-//           // Other events you may care about:
-//           // - checkout.session.async_payment_succeeded / failed
-//           // - charge.refunded
-//           // - payment_intent.payment_failed
-//           break;
-//       }
-//       res.json({ received: true });
-//     } catch (err) {
-//       console.error("⚠️ Webhook handler error:", err);
-//       // Return 200 only if you want Stripe to stop retrying.
-//       // If you want Stripe to retry, return 5xx.
-//       res.status(500).send("Server error");
-//     }
-
-//     // if (event.type === "checkout.session.completed") {
-//     //   const session = event.data.object;
-//     //   // payment_intent can be string or object depending on expansion
-//     //   const piId =
-//     //     typeof session.payment_intent === "string"
-//     //       ? session.payment_intent
-//     //       : session.payment_intent.id;
-
-//     //   // Retrieve any metadata you attached when creating line_items/product_data
-//     //   // Then build and save your booking record here
-//     //   // e.g., const booking = {..., transactionId: piId, deliveryStatus: 'Pending'}
-//     // }
-
-//     // res.json({ received: true });
-//   }
-// );
 app.post(
   "/webhooks/stripe",
   express.raw({ type: "application/json" }),
@@ -224,6 +139,173 @@ app.post(
   }
 );
 
+app.post(
+  "/stripe-webhook",
+  express.raw({ type: "application/json" }), //<- Raw body (not parsed JSON)
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"]; // ← Stripe's signature
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // ← webhook secret
+
+    let event;
+
+    try {
+      // Verify: "Is this really from Stripe, or a hacker?"
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+      console.error("Webhook signature verification failed:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    console.log(sig);
+
+    // Handling the event
+    try {
+      switch (event.type) {
+        case "checkout.session.completed":
+          const session = event.data.object;
+          console.log(session);
+          // Only handle subscription checkouts
+
+          if (session.mode === "subscription") {
+            const userId = session.metadata.userId;
+            const userEmail = session.metadata.userEmail;
+            const subscriptionId = session.subscription;
+            const planType = session.metadata.plan_lookup_key;
+
+            if (userId) {
+              await userCollection.updateOne(
+                { firebaseUid: userId },
+                {
+                  $set: {
+                    hasSubscription: true,
+                    subscriptionId: subscriptionId,
+                    subscriptionStatus: "active",
+                    subscriptionPlan: planType,
+                    subscriptionStartDate: new Date(),
+                  },
+                },
+                { upsert: false }
+              );
+              console.log(`✅ User ${userId} subscription activated`);
+            }
+          }
+          break;
+
+        case "customer.subscription.updated":
+          const updatedSubscription = event.data.object;
+
+          console.log(updatedSubscription);
+
+          // Check if user scheduled cancellation
+          if (updatedSubscription.cancel_at_period_end) {
+            await userCollection.updateOne(
+              { subscriptionId: updatedSubscription.id },
+              {
+                $set: {
+                  subscriptionStatus: "scheduled_cancellation",
+                  subscriptionEndDate: new Date(
+                    updatedSubscription.current_period_end * 1000
+                  ),
+                  subscriptionUpdatedAt: new Date(),
+                },
+              }
+            );
+
+            break;
+          }
+
+          // Check if user reactivated (was scheduled, now not)
+          // We can detect this by checking if status is active and cancel_at_period_end is false
+          const existingUser = await userCollection.findOne({
+            subscriptionId: updatedSubscription.id,
+          });
+
+          if (
+            existingUser?.subscriptionStatus === "scheduled_cancellation" &&
+            !updatedSubscription.cancel_at_period_end &&
+            updatedSubscription.status === "active"
+          ) {
+            // user reactivated their subscription
+            await userCollection.updateOne(
+              { subscriptionId: updatedSubscription.id },
+              {
+                $set: {
+                  subscriptionStatus: "active",
+                  subscriptionEndDate: null,
+                  subscriptionUpdatedAt: new Date(),
+                  subscriptionReactivatedAt: new Date(),
+                },
+              }
+            );
+            break;
+          }
+
+          // Otherwise, handle plan
+          // Get the new price ID
+          const newPrice = updatedSubscription.items.data[0].price;
+
+          // Determine which plan it is
+          let newPlanType;
+          if (newPrice.id === process.env.STRIPE_YEARLY_PRICE_ID) {
+            newPlanType = "standard_yearly";
+          } else if (newPrice.id === process.env.STRIPE_MONTHLY_PRICE_ID) {
+            newPlanType = "standard_monthly";
+          } else {
+            // Unknown price ID - log it but don't fail
+            console.warn("Unknown price ID:", newPrice.id);
+            newPlanType = null;
+          }
+
+          // Update database
+          const updateFields = {
+            subscriptionStatus: updatedSubscription.status,
+            hasSubscription: updatedSubscription.status === "active",
+            subscriptionUpdatedAt: new Date(),
+          };
+
+          if (newPlanType) {
+            updateFields.subscriptionPlan = newPlanType;
+            updateFields.changedPlanAt = new Date();
+          }
+
+          // update database
+          await userCollection.updateOne(
+            { subscriptionId: updatedSubscription.id },
+            {
+              $set: updateFields,
+            }
+          );
+
+          break;
+
+        case "customer.subscription.deleted":
+          const deletedSubscription = event.data.object;
+
+          // Find user and mark subscription as inactive
+          await userCollection.updateOne(
+            { subscriptionId: deletedSubscription.id },
+            {
+              $set: {
+                hasSubscription: false,
+                subscriptionStatus: "cancelled",
+                subscriptionEndDate: new Date(),
+              },
+            }
+          );
+          console.log(`✅ Subscription ${deletedSubscription.id} cancelled`);
+          break;
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+
+      res.json({ received: true });
+    } catch (err) {
+      console.error("Error processing webhook:", err);
+      res.status(500).send("Webhook processing failed");
+    }
+  }
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -242,6 +324,35 @@ const verifyToken = async (req, res, next) => {
     req.user = decoded;
     next();
   });
+};
+
+// send email using nodemailer
+const sendEmail = async (emailAddress, emailData) => {
+  console.log("Email address", emailAddress, "Email data", emailData);
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.TRANSPORT_EMAIL,
+      pass: process.env.TRANSPORT_PASS,
+    },
+  });
+
+  try {
+    await transporter.verify();
+    const mailBody = {
+      from: `"ShopGenius" <${process.env.TRANSPORT_EMAIL}>`,
+      to: emailAddress,
+      subject: emailData?.subject,
+      html: emailData?.message,
+    };
+    const info = await transporter.sendMail(mailBody);
+    console.log("Email sent:", info.response);
+  } catch (err) {
+    console.error("Email send failed:", err.message);
+  }
 };
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xkl5p.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -409,6 +520,7 @@ async function run() {
 
     app.get("/product/details/:id", async (req, res) => {
       const { id } = req?.params;
+      console.log(id);
       const result = await productCollection.findOne({ _id: new ObjectId(id) });
       res.send(result);
     });
@@ -420,7 +532,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post(`/products`, async (req, res) => {
+    app.post(`/products`, verifyToken, verifySeller, async (req, res) => {
       const product = req?.body;
       const result = await productCollection.insertOne(product);
       res.send(result);
@@ -429,7 +541,6 @@ async function run() {
     app.patch(`/update-product-sold-count/:id`, async (req, res) => {
       const id = req?.params?.id;
       const { sold_count } = req?.body;
-      console.log(id, sold_count);
       const updatedDoc = {
         $set: {
           sold_count,
@@ -605,6 +716,246 @@ async function run() {
       }
     });
 
+    // user-subscription
+    app.get(`/user/subscription/:email`, verifyToken, async (req, res) => {
+      const { email } = req?.params;
+      // console.log("hit");
+      const isSubscribed = await userCollection.findOne(
+        { email },
+        {
+          projection: {
+            hasSubscription: 1,
+            subscriptionPlan: 1,
+            subscriptionId: 1,
+            subscriptionStatus: 1,
+            subscriptionEndDate: 1,
+            subscriptionStartDate: 1
+          },
+        }
+      );
+      console.log(isSubscribed);
+      return res.send(isSubscribed);
+    });
+
+    // change-subscription
+    app.post("/change-subscription-plan", verifyToken, async (req, res) => {
+      try {
+        const { subscriptionId, newPlanType } = req?.body;
+
+        // validate inputs
+        if (!subscriptionId || !newPlanType) {
+          return res.status(400).json({
+            error: "Missing subscriptionId or newPlanType",
+          });
+        }
+
+        let newPriceId;
+        let planName;
+
+        if (newPlanType === "standard_yearly") {
+          newPriceId = process.env.STRIPE_YEARLY_PRICE_ID;
+          planName = "Annual Plan";
+        } else if (newPlanType === "standard_monthly") {
+          newPriceId = process.env.STRIPE_MONTHLY_PRICE_ID;
+          planName = "Monthly Plan";
+        } else {
+          return res.status(400).json({
+            error: `Invalid plan type: ${newPlanType}`,
+          });
+        }
+
+        // Validate price ID exists
+        if (!newPriceId) {
+          return res.status(500).json({
+            error: `Price ID not configured for ${newPlanType}`,
+          });
+        }
+
+        // Step 1: Get the current subscription from Stripe
+        const subscription = await stripe.subscriptions.retrieve(
+          subscriptionId
+        );
+
+        // Check if subscription exists and is active
+        if (!subscription || subscription.status !== "active") {
+          return res.status(400).json({
+            error: "Subscription not found or not active",
+          });
+        }
+
+        console.log("subs", subscription);
+
+        // Step 2: Get the current subscription item (the thing being billed)
+        const subscriptionItemId = subscription.items.data[0].id;
+
+        console.log(subscription);
+
+        // Step 3: Update the subscription with new price
+        const updatedSubscription = await stripe.subscriptions.update(
+          subscriptionId,
+          {
+            items: [
+              {
+                id: subscriptionItemId, //update existing item
+                price: newPriceId, //New price ID (yearly)
+              },
+            ],
+            proration_behavior: "create_prorations", // handle billing fairly
+          }
+        );
+
+        // Step 4: Update your database
+        await userCollection.updateOne(
+          { subscriptionId: subscriptionId },
+          {
+            $set: {
+              subscriptionPlan: newPlanType,
+              subscriptionUpdatedAt: new Date(),
+              changedPlanAt: new Date(),
+            },
+          }
+        );
+
+        res.json({
+          success: true,
+          message: `Plan changed to ${planName}`,
+          subscription: {
+            id: updatedSubscription.id,
+            status: updatedSubscription.status,
+            plan: newPlanType,
+            current_period_end: new Date(
+              updatedSubscription.current_period_end * 1000
+            ),
+          },
+        });
+      } catch (err) {
+        console.error("Error changing subscription plan:", err);
+        res
+          .status(500)
+          .json({ error: err.message || "Failed to change the plan type" });
+      }
+    });
+
+    // reactive-subscription
+    app.post("/reactivate-subscription", verifyToken, async (req, res) => {
+      try {
+        const { subscriptionId } = req?.body;
+
+        if (!subscriptionId) {
+          return res.status(400).json({
+            error: "Missing subscriptionId",
+          });
+        }
+
+        // Get current subscription from Stripe
+        const subscription = await stripe.subscriptions.retrieve(
+          subscriptionId
+        );
+
+        // Check if it's actually scheduled for cancellation
+        if (!subscription.cancel_at_period_end) {
+          return res.status(400).json({
+            error: "Subscription is not scheduled for cancellation",
+          });
+        }
+
+        // Reactivate: Remove the cancellation
+        const updatedSub = await stripe.subscriptions.update(subscriptionId, {
+          cancel_at_period_end: false,
+        });
+
+        // Update database
+        await userCollection.updateOne(
+          { subscriptionId },
+          {
+            $set: {
+              subscriptionStatus: "active",
+              subscriptionEndDate: null,
+              subscriptionUpdatedAt: new Date(),
+              subscriptionReactivatedAt: new Date(),
+            },
+          }
+        );
+
+        res.json({
+          success: true,
+          message: "Subscription reactivated successfully",
+          subscription: {
+            id: updatedSub.id,
+            status: updatedSub.status,
+            cancel_at_period_end: updatedSub.cancel_at_period_end,
+            current_period_end: new Date(updatedSub.current_period_end * 1000),
+          },
+        });
+      } catch (err) {
+        console.error("Reactivation error:", err);
+        res.status(500).json({
+          error: err.message || "Failed to reactivate subscription",
+        });
+      }
+    });
+
+    // cancel-subscription
+    app.post("/cancel-subscription", async (req, res) => {
+      const { subscriptionId } = req?.body;
+      const subscriptionInfo = await stripe.subscriptions.retrieve(
+        subscriptionId
+      );
+      console.log("sub info", subscriptionInfo);
+      // Start time
+      const start = subscriptionInfo.start_date; // unix seconds
+      const now = Math.floor(Date.now() / 1000);
+      const threeDays = 3 * 24 * 60 * 60;
+      console.log("Start", start, "Now", now);
+
+      if (now - start <= threeDays) {
+        //find latest invoice
+        const latestInvoiceId = subscriptionInfo.latest_invoice;
+        const invoice = await stripe.invoices.retrieve(latestInvoiceId);
+
+        //refund the invoice's payment
+        const paymentIntentId = invoice.payment_intent;
+        if (paymentIntentId) {
+          await stripe.refunds.create({
+            payment_intent: paymentIntentId,
+          });
+        }
+        console.log("invoice", invoice);
+
+        //cancel immediately
+        await stripe.subscriptions.cancel(subscriptionId);
+
+        // update the db
+        await userCollection.updateOne(
+          { subscriptionId },
+          {
+            $set: {
+              hasSubscription: false,
+              subscriptionStatus: "cancelled_refunded",
+              subscriptionEndDate: new Date(),
+            },
+          }
+        );
+      } else if (now - start > threeDays) {
+        const updatedSub = await stripe.subscriptions.update(subscriptionId, {
+          cancel_at_period_end: true,
+        });
+
+        // storing this in db to show user probable cancellation date
+        await userCollection.updateOne(
+          { subscriptionId },
+          {
+            $set: {
+              subscriptionStatus: "scheduled_cancellation",
+              subscriptionEndDate: new Date(
+                updatedSub.current_period_end * 1000
+              ),
+            },
+          }
+        );
+      }
+    });
+
     // payments
     app.post("/create-payment-intent", async (req, res) => {
       const price = req?.body?.total;
@@ -628,52 +979,6 @@ async function run() {
       // send it to client
       res.send({ clientSecret: client_secret });
     });
-
-    // checkout-all-payment
-    // app.post(`/create-checkout-session`, async (req, res) => {
-    //   try {
-    //     // console.log('carts',req?.body?.items);
-    //     const session = await stripe.checkout.sessions.create({
-    //       payment_method_types: ["card"],
-    //       mode: "payment",
-    //       line_items: req?.body?.items?.map((item) => {
-    //         console.log(item?.category);
-    //         return {
-    //           price_data: {
-    //             currency: item?.currency,
-    //             product_data: {
-    //               name: item?.title,
-    //               metadata: {
-    //                 productId: item.productBookingId,
-    //                 title: item?.title,
-    //                 brand: item.brand,
-    //                 productImage: item?.image,
-    //                 category: item.category,
-    //                 color: item.color,
-    //                 totalPrice: item?.price,
-    //                 sellerName: item?.seller?.name || "",
-    //                 sellerStore: item?.seller?.storeName || "",
-    //                 sellerEmail: item?.seller?.email || "",
-    //                 sellerLocation: item?.seller?.location || "",
-    //                 userName: item?.user?.name || "",
-    //                 userEmail: item?.user?.email || "",
-    //                 userPhoto: item?.user?.photoURL || "",
-    //               },
-    //             },
-    //             unit_amount: parseFloat(item?.price) * 100,
-    //           },
-    //           quantity: Number(item?.quantity),
-    //         };
-    //       }),
-    //       success_url: `${process.env.FRONT_END_URL}/payment-success`,
-    //       cancel_url: `${process.env.FRONT_END_URL}/payment-fail`,
-    //     });
-    //     res.json({ url: session.url });
-    //   } catch (err) {
-    //     console.log(err);
-    //     res.status(500).json({ error: err.message });
-    //   }
-    // });
 
     // server: create-checkout-session
     app.post(`/create-checkout-session`, async (req, res) => {
@@ -747,7 +1052,7 @@ async function run() {
       const li = await stripe.checkout.sessions.listLineItems(session.id, {
         limit: 100,
       });
-      // console.log(session, 'after booking',items);
+      console.log(session, "after booking", items);
 
       res.json({
         session,
@@ -756,10 +1061,66 @@ async function run() {
       });
     });
 
+    // for monthly subscription
+    app.post("/create-subscription-checkout", async (req, res) => {
+      try {
+        const { userId, userEmail, planType } = req.body;
+
+        const lookupKey = planType || "";
+
+        let priceId;
+        let planName;
+
+        if (planType === "standard_yearly") {
+          priceId = process.env.STRIPE_YEARLY_PRICE_ID;
+          planName = "Annual Plan";
+        } else if (planType === "standard_monthly") {
+          priceId = process.env.STRIPE_MONTHLY_PRICE_ID;
+          planName = "Monthly Plan";
+        } else {
+          return res.status(400).send({ message: "Something went wrong!!" });
+        }
+
+        if (!priceId) {
+          return res.status(400).json({
+            error: "Price ID not configured. Please contact support.",
+          });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+          mode: "subscription",
+          payment_method_types: ["card"],
+
+          customer_email: userEmail,
+
+          line_items: [
+            {
+              price: priceId,
+              quantity: 1,
+            },
+          ],
+
+          metadata: {
+            userId: userId || "guest",
+            userEmail: userEmail || "",
+            plan_lookup_key: lookupKey, // Store for your reference
+            plan_name: planName,
+          },
+
+          success_url: `${process.env.FRONT_END_URL}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${process.env.FRONT_END_URL}`,
+        });
+
+        res.json({ url: session.url, sessionId: session.id });
+      } catch (error) {
+        console.error("Subscription checkout error: ", error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+
     // booking
     app.post("/booking", verifyToken, async (req, res) => {
       const booking = req?.body;
-      // console.log(booking);
 
       if (booking?.source) {
         if (booking?.source === "Product-details") {
@@ -776,7 +1137,9 @@ async function run() {
           }
           delete booking?.source;
         } else if (booking?.source === "checkout_success") {
+          console.log("start");
           booking?.items?.forEach(async (item) => {
+            // console.log("booked item boom", item);
             const isExistInCart = await cartCollection.findOne({
               productBookingId: item?.productBookingId,
               "userInfo.email": item?.user?.email,
@@ -787,9 +1150,9 @@ async function run() {
                 "userInfo.email": item?.user?.email,
               });
             }
-            console.log(item);
+            // console.log(item);
             const { date, transactionId, currency, deliveryStatus } = booking;
-            console.log("from booking", booking);
+            console.log("from booking", booking, "date", date);
             const formedDoc = {
               ...item,
               date,
@@ -797,17 +1160,32 @@ async function run() {
               currency,
               deliveryStatus,
             };
-            console.log(formedDoc);
-
             const result = await bookingCollection.insertOne(formedDoc);
+            console.log("result", result);
           });
+
+          console.log("booking items", booking?.items);
+
+          // console.log(booking);
+
+          // guest email confirmation
+          sendEmail(booking?.items[0]?.user?.email, {
+            subject: "Successfully booked!",
+            message: `You have successfully bought the item. Transaction id : ${booking?.transactionId}`,
+          });
+
+          sendEmail(booking?.items[0]?.seller?.email, {
+            subject: `Product Update`,
+            message: `${booking?.items[0]?.user?.email} has bought your product.`,
+          });
+
           return res.send({
             success: true,
             message: "Checkout bookings saved",
           });
         }
       } else {
-        console.log("entered", booking);
+        // console.log("entered", booking);
         const isExistInCart = await cartCollection.findOne({
           _id: new ObjectId(booking?.productBookingId),
           "userInfo.email": booking?.user?.email,
@@ -822,10 +1200,18 @@ async function run() {
       }
 
       // console.log("came here");
-      // sendEmail(booking?.guest?.email, {
-      //   subject: "Congratulations!",
-      //   message: `You have successfully booked the room ${booking?.guest?.name}!Transaction id:${booking?.transactionId}`,
-      // });
+      console.log(booking);
+      sendEmail(booking?.user?.email, {
+        subject: "Congratulations!",
+        message: `You have successfully bought the item ${booking?.user?.name}!Transaction id:${booking?.transactionId}`,
+      });
+
+      sendEmail(booking?.seller?.email, {
+        subject: `Product Update`,
+        message: `${booking?.user?.email} has bought your product.`,
+      });
+
+      console.log("hit");
 
       const result = await bookingCollection.insertOne(booking);
       res.send(result);
@@ -847,12 +1233,18 @@ async function run() {
         .sort({ _id: -1 })
         .limit(4)
         .toArray();
-      console.log(result);
+      // console.log(result);
 
       if (recentBoughtCategories == "false") {
-        console.log("entered", recentBoughtCategories);
-        console.log(recentBoughtCategories);
-        return res.send(result);
+        // Get unique items based on productBookingId (keeps most recent due to sort)
+        const uniqueItems = result.filter(
+          (item, index, self) =>
+            index ===
+            self.findIndex((t) => t.productBookingId === item.productBookingId)
+        );
+
+        // Limit to 4 after filtering for uniqueness
+        return res.send(uniqueItems.slice(0, 4));
       }
 
       // let cats;
@@ -890,7 +1282,7 @@ async function run() {
     });
 
     // carts
-    app.get(`/cart`, async (req, res) => {
+    app.get(`/cart`, verifyToken, async (req, res) => {
       const { email } = req?.query;
       const result = await cartCollection
         .find({ "userInfo.email": email })
@@ -898,7 +1290,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post(`/cart`, async (req, res) => {
+    app.post(`/cart`, verifyToken, async (req, res) => {
       const { cart } = req?.body;
       console.log(cart);
       const cartItem = { ...cart, date: Date.now() };
@@ -920,7 +1312,7 @@ async function run() {
       res.send(data);
     });
 
-    app.delete(`/cart/:id`, async (req, res) => {
+    app.delete(`/cart/:id`, verifyToken, async (req, res) => {
       const id = req?.params?.id;
       const result = await cartCollection.deleteOne({ _id: new ObjectId(id) });
       res.send(result);
@@ -941,6 +1333,7 @@ async function run() {
 
     app.put(`/users`, async (req, res) => {
       const user = req?.body;
+      console.log("user found: ", user);
       const query = { email: user?.email };
       const options = { upsert: true };
       const userFound = await userCollection.findOne(query);
@@ -950,7 +1343,13 @@ async function run() {
             $set: { status: user?.status },
           });
           return res.send(updateUser);
-        } else {
+        } else if (user?.status === "verified") {
+          if (!userFound?.firebaseUid) {
+            const updatedUserDoc = await userCollection.updateOne(query, {
+              $set: { firebaseUid: user?.firebaseUid },
+            });
+            return res.send(updatedUserDoc);
+          }
           return res.send(userFound);
         }
       }
@@ -1169,29 +1568,39 @@ async function run() {
       }
     );
 
-    app.get(`/manage-orders/:email`, async (req, res) => {
-      const email = req?.params?.email;
-      const result = await bookingCollection
-        .find({ "seller.email": email })
-        .toArray();
-      res.send(result);
-    });
+    app.get(
+      `/manage-orders/:email`,
+      verifyToken,
+      verifySeller,
+      async (req, res) => {
+        const email = req?.params?.email;
+        const result = await bookingCollection
+          .find({ "seller.email": email })
+          .toArray();
+        res.send(result);
+      }
+    );
 
-    app.patch(`/update-delivery-status/:id`, async (req, res) => {
-      const id = req?.params?.id;
-      const { deliveryStatus } = req?.body;
-      const updatedDoc = {
-        $set: {
-          deliveryStatus,
-          lastUpdatedTime: Date.now(),
-        },
-      };
-      const result = await bookingCollection.updateOne(
-        { _id: new ObjectId(id) },
-        updatedDoc
-      );
-      res.send(result);
-    });
+    app.patch(
+      `/update-delivery-status/:id`,
+      verifyToken,
+      verifySeller,
+      async (req, res) => {
+        const id = req?.params?.id;
+        const { deliveryStatus } = req?.body;
+        const updatedDoc = {
+          $set: {
+            deliveryStatus,
+            lastUpdatedTime: Date.now(),
+          },
+        };
+        const result = await bookingCollection.updateOne(
+          { _id: new ObjectId(id) },
+          updatedDoc
+        );
+        res.send(result);
+      }
+    );
 
     // admin dashboard
     // stats
@@ -1271,21 +1680,26 @@ async function run() {
       });
     });
 
-    app.patch("/update-user-role/:email", verifyAdmin, async (req, res) => {
-      const email = req?.params?.email;
-      const { selectedRole } = req?.body;
-      const query = { email };
-      const updatedDoc = {
-        $set: {
-          role: selectedRole,
-          status: "verified",
-          timeStamp: Date.now(),
-        },
-      };
+    app.patch(
+      "/update-user-role/:email",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const email = req?.params?.email;
+        const { selectedRole } = req?.body;
+        const query = { email };
+        const updatedDoc = {
+          $set: {
+            role: selectedRole,
+            status: "verified",
+            timeStamp: Date.now(),
+          },
+        };
 
-      const result = await userCollection.updateOne(query, updatedDoc);
-      res.send(result);
-    });
+        const result = await userCollection.updateOne(query, updatedDoc);
+        res.send(result);
+      }
+    );
 
     // Logout
     app.get("/logout", async (req, res) => {

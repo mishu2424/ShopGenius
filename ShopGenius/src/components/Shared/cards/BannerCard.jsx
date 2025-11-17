@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 
 const BannerCard = ({ items, message }) => {
   console.log(items, message);
+
+  items.forEach(item=>console.log(message, message==="carts"&& `/product/${item?.productBookingId}`));
   return (
     <div className="grid grid-cols-2">
-      {items.length > 2
+      {items.length > 3
         ? items.slice(0, 4).map((item) => (
             <div
               key={item?._id}
@@ -14,7 +16,7 @@ const BannerCard = ({ items, message }) => {
               <Link
                 to={
                   message === "carts"
-                    ? `/product/${item?.productId}`
+                    ? `/product/${item?.productBookingId}`
                     : message === "popular"
                     ? `/product/${item?._id}`
                     : `/product/${item?.productBookingId}`
@@ -31,8 +33,8 @@ const BannerCard = ({ items, message }) => {
               </Link>
             </div>
           ))
-        : items.length === 2
-        ? items.map((item) => (
+        : (items.length === 2 || items.length===3)
+        ? items?.slice(0,2).map((item) => (
             <div
               key={item?._id}
               className="col-span-2 flex flex-col items-center justify-center flex-wrap py-3"
@@ -40,7 +42,7 @@ const BannerCard = ({ items, message }) => {
               <Link
                 to={
                   message === "carts"
-                    ? `/product/${item?.productId}`
+                    ? `/product/${item?.productBookingId}`
                     : message === "popular"
                     ? `/product/${item?._id}`
                     : `/product/${item?.productBookingId}`
@@ -52,7 +54,7 @@ const BannerCard = ({ items, message }) => {
                       ? item?.selectedImage
                       : item?.colors[0]?.image[0]
                   }
-                  className="w-60 h-32 object-cover rounded-sm cursor-pointer hover:opacity-80 hover:brightness-75 duration-300"
+                  className="w-60 h-38 object-cover rounded-sm cursor-pointer hover:opacity-80 hover:brightness-75 duration-300"
                 />
               </Link>
             </div>
@@ -63,7 +65,7 @@ const BannerCard = ({ items, message }) => {
               <Link
                 to={
                   message === "carts"
-                    ? `/product/${item?.productId}`
+                    ? `/product/${item?.productBookingId}`
                     : message === "popular"
                     ? `/product/${item?._id}`
                     : `/product/${item?.productBookingId}`

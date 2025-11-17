@@ -11,6 +11,8 @@ const CartItem = ({ item, handleRemove, onQuantityChange }) => {
     setQuantity(newQty);
     onQuantityChange(item._id, newQty);
   };
+
+  console.log(item);
   return (
     <div className="flex flex-col md:flex-row gap-4 border-b border-gray-200 py-4">
       {/* Product Image */}
@@ -25,7 +27,7 @@ const CartItem = ({ item, handleRemove, onQuantityChange }) => {
       {/* Product Details */}
       <div className="flex flex-col justify-between w-full">
         <div>
-          <Link to={`/product/${item?.productId}`} className="cursor-pointer">
+          <Link to={`/product/${item?.productBookingId}`} className="cursor-pointer">
             <h2 className="text-lg font-semibold text-gray-900 hover:text-[#007185] cursor-pointer">
               {item?.title}
             </h2>
