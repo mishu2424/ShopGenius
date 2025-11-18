@@ -26,7 +26,7 @@ const Navbar = ({ navbarRef }) => {
 
   // console.log(value);
 
-  // // Optional: lock scroll while dimmed
+  // Optional: lock scroll while dimmed
   // useEffect(() => {
   //   if (searchFocused) {
   //     document.body.style.overflow = "hidden";

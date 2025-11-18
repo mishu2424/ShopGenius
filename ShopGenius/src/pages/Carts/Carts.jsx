@@ -59,7 +59,7 @@ const Carts = () => {
   const { mutateAsync: deleteCartAsync } = useMutation({
     mutationKey: ["cart-delete"],
     mutationFn: async (id) => {
-      const { data } = await axiosCommon.delete(`/cart/${id}`);
+      const { data } = await axiosSecure.delete(`/cart/${id}`);
       return data;
     },
     onSuccess: () => {

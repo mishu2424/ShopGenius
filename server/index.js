@@ -191,6 +191,46 @@ app.post(
           }
           break;
 
+        case "customer.subscription.created":
+          const newSubscription = event.data.object;
+
+          const customerId = newSubscription.customer;
+
+          // Get customer details
+          const customer = await stripe.customers.retrieve(customerId);
+
+          // Send welcome email
+          await sendEmail(customer.email, {
+            subject: "🎉 Welcome to ShopGenius Prime!",
+            message: `
+              <h2>Welcome to ShopGenius Prime! 🎉</h2>
+
+              <p>Hi${customer.name ? ` ${customer.name}` : ""},</p>
+
+              <p>Thank you for subscribing! You now have access to:</p>
+
+              <ul style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                <li>✅ Free Express Delivery on all orders</li>
+                <li>✅ Exclusive Member-Only Deals</li>
+                <li>✅ Priority Support</li>
+                <li>✅ Early Access to new products</li>
+              </ul>
+
+              <h3>Getting Started:</h3>
+              <ol>
+                <li>Browse our exclusive member deals</li>
+                <li>Set up delivery preferences</li>
+                <li>Explore early access products</li>
+              </ol>
+
+              <p style="color: #7f8c8d; font-size: 12px; margin-top: 30px;">
+                Questions? Reply to this email or contact support@shopgenius.com
+              </p>
+            `,
+          });
+
+          break;
+
         case "customer.subscription.updated":
           const updatedSubscription = event.data.object;
 
@@ -210,6 +250,68 @@ app.post(
                 },
               }
             );
+
+            const customerDoc = await userCollection.findOne({
+              subscriptionId: updatedSubscription.id,
+            });
+            if (customerDoc?.email) {
+              const endDate = new Date(
+                updatedSubscription.current_period_end * 1000
+              ).toLocaleDateString();
+
+              await sendEmail(customerDoc.email, {
+                subject: "⚠️ Your ShopGenius Premium Will End Soon",
+                message: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; color: #333;">
+                  <h2 style="color: #d35400; margin-bottom: 10px;">Your Subscription Is Scheduled to End</h2>
+
+                  <p>Hi${customerDoc.name ? ` ${customerDoc.name}` : ""},</p>
+
+                  <p>
+                    This is a quick update to let you know that your 
+                    <strong>ShopGenius Premium</strong> subscription 
+                    has been <strong>scheduled for cancellation</strong>.
+                  </p>
+
+                  <p>
+                    You’ll continue to enjoy all Premium benefits until:
+                  </p>
+
+                  <p style="font-size: 18px; font-weight: bold; color: #2980b9;">
+                    ${endDate}
+                  </p>
+
+                  <hr style="margin: 20px 0;" />
+
+                  <h3 style="margin-bottom: 8px;">Until then, you still have access to:</h3>
+                  <ul style="background: #f4f6f7; padding: 15px 20px; border-radius: 8px; line-height: 1.7;">
+                    <li>🚚 <strong>Fast delivery</strong> on eligible items</li>
+                    <li>🔥 <strong>Member-only deals</strong> and lightning offers</li>
+                    <li>⭐ <strong>Priority support</strong> for your orders</li>
+                    <li>🔔 <strong>Early access</strong> to new drops and restocks</li>
+                  </ul>
+
+                  <p style="margin-top: 20px;">
+                    Changed your mind? You can <strong>keep your benefits</strong> by reactivating
+                    your subscription before this date.
+                  </p>
+
+                  <p style="text-align: center; margin-top: 15px;">
+                    <a href="${process.env.FRONT_END_URL}/premium"
+                       style="background: #3498db; color: #fff; padding: 12px 24px; 
+                       text-decoration: none; border-radius: 6px; display: inline-block;">
+                      Reactivate ShopGenius Premium
+                    </a>
+                  </p>
+
+                  <p style="font-size: 12px; color: #7f8c8d; margin-top: 30px;">
+                    If you didn’t request this change or have questions, reply to this email 
+                    or contact our support team. We’re happy to help 💙
+                  </p>
+                </div>
+                `,
+              });
+            }
 
             break;
           }
@@ -237,6 +339,14 @@ app.post(
                 },
               }
             );
+
+            // Send welcome email
+            await sendEmail(existingUser.email, {
+              subject: "🎉 Reactivation Successful!",
+              message: `
+                <p>Your reactivation has been successfully completed!!!</p>
+              `,
+            });
             break;
           }
 
@@ -276,6 +386,13 @@ app.post(
             }
           );
 
+          await sendEmail(existingUser?.email, {
+            subject: "🎉 Plan changed Successfully!",
+            message: `
+                <p>Your plan has been successfully changed!!!</p>
+              `,
+          });
+
           break;
 
         case "customer.subscription.deleted":
@@ -292,15 +409,210 @@ app.post(
               },
             }
           );
+
+          // Fetch user to email
+          const customerDoc = await userCollection.findOne({
+            subscriptionId: deletedSubscription.id,
+          });
+
+          if (customerDoc?.email) {
+            await sendEmail(customerDoc.email, {
+              subject: "Your ShopGenius Premium Has Ended",
+              message: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; color: #333;">
+                  <h2 style="color: #c0392b; margin-bottom: 10px;">Your Premium Subscription Has Ended</h2>
+
+                  <p>Hi${customerDoc.name ? ` ${customerDoc.name}` : ""},</p>
+
+                  <p>
+                    This email confirms that your <strong>ShopGenius Premium</strong> subscription 
+                    has now been <strong>cancelled</strong>.
+                  </p>
+
+                  <p>
+                    You’ll no longer have access to Premium benefits such as:
+                  </p>
+
+                  <ul style="background: #fdf2f2; padding: 15px 20px; border-radius: 8px; line-height: 1.7;">
+                    <li>🚫 Free express delivery on eligible orders</li>
+                    <li>🚫 Member-only deals and lightning discounts</li>
+                    <li>🚫 Priority customer support</li>
+                    <li>🚫 Early access to exclusive product drops</li>
+                  </ul>
+
+                  <p style="margin-top: 20px;">
+                    We’re grateful you tried ShopGenius Premium and hope it made your shopping easier and more fun.
+                    You’re always welcome to come back anytime.
+                  </p>
+
+                  <p style="text-align: center; margin-top: 15px;">
+                    <a href="${process.env.FRONT_END_URL}/premium"
+                       style="background: #3498db; color: #fff; padding: 12px 24px; 
+                       text-decoration: none; border-radius: 6px; display: inline-block;">
+                      Restart Premium Anytime
+                    </a>
+                  </p>
+
+                  <p style="font-size: 12px; color: #7f8c8d; margin-top: 30px;">
+                    If this cancellation was a mistake or you didn’t authorize it, please contact us immediately.
+                  </p>
+                </div>
+                `,
+            });
+          }
           console.log(`✅ Subscription ${deletedSubscription.id} cancelled`);
           break;
+
+        // Send Payment Receipt Email
+        case "invoice.payment_succeeded":
+          const invoice = event.data.object;
+
+          const customerEmail = invoice.customer_email;
+          const amountPaid = (invoice.amount_paid / 100).toFixed(2); //convert cents ro dollars
+          const currency = invoice.currency.toUpperCase();
+          const invoiceUrl = invoice.hosted_invoice_url; //Link to Stripe invoice
+          const invoiceNumber = invoice.number;
+
+          //Update Payment History in User Document
+          await userCollection.updateOne(
+            { subscriptionId: invoice.subscription },
+            {
+              $push: {
+                paymentHistory: {
+                  invoiceId: invoice.id,
+                  amount: invoice.amount_paid / 100,
+                  currency: invoice.currency,
+                  date: new Date(invoice.created * 1000),
+                  invoiceUrl: invoiceUrl,
+                },
+              },
+              $set: {
+                lastPaymentDate: new Date(invoice.created * 1000),
+                lastPaymentAmount: invoice.amount_paid / 100,
+              },
+            }
+          );
+
+          //send receipt email
+          await sendEmail(customerEmail, {
+            subject: `Payment Receipt - Invoice ${invoiceNumber}`,
+            message: `
+              <p>Thank you for your payment!</p>
+              <p><strong>Amount Paid:</strong> ${currency} $${amountPaid}</p>
+              <p><strong>Invoice Number:</strong> ${invoiceNumber}</p>
+              <p><strong>Date:</strong> ${new Date(
+                invoice.created * 1000
+              ).toLocaleDateString()}</p>
+              <p><a href="${invoiceUrl}">View Invoice</a></p>
+              <hr>
+              <p>Your ShopGenius Prime subscription is active!</p>
+            `,
+          });
+
+          break;
+
+        // Send Payment Failed Email with Action Steps
+        case "invoice.payment_failed":
+          const failedInvoice = event.data.object;
+
+          const customerEmailId = failedInvoice.customer_email;
+          const amountDue = (failedInvoice.amount_due / 100).toFixed(2);
+          const attemptCount = failedInvoice.attempt_count;
+          const nextPaymentAttempt = failedInvoice.next_payment_attempt;
+          // Send urgent email
+          await sendEmail(customerEmailId, {
+            subject: "⚠️ Payment Failed - Action Required",
+            message: `
+              <h2 style="color: #e74c3c;">Payment Failed ❌</h2>
+              <p>We couldn't process your payment for ShopGenius Prime.</p>
+
+              <div style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 20px 0;">
+                <p><strong>Amount Due:</strong> $${amountDue}</p>
+                <p><strong>Attempt:</strong> ${attemptCount} of 4</p>
+                ${
+                  nextPaymentAttempt
+                    ? `<p><strong>Next Retry:</strong> ${new Date(
+                        nextPaymentAttempt * 1000
+                      ).toLocaleDateString()}</p>`
+                    : ""
+                }
+              </div>
+
+              <p><strong>What to do:</strong></p>
+              <ol>
+                <li>Update your payment method</li>
+                <li>Ensure sufficient funds</li>
+                <li>Check card expiration date</li>
+              </ol>
+
+              <p><a href="https://yoursite.com/billing" style="background: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Update Payment Method</a></p>
+
+              <p style="color: #e74c3c; font-size: 12px; margin-top: 20px;">
+                <strong>Important:</strong> If payment fails after 4 attempts, your subscription will be cancelled.
+              </p>
+            `,
+          });
+
+          // Update user status in database
+          // Suspend Premium Features After Multiple Failures
+          if (attemptCount >= 3) {
+            await userCollection.updateOne(
+              { subscriptionId: failedInvoice.subscription },
+              {
+                $set: {
+                  hasSubscription: false, //suspend access
+                  subscriptionStatus: "suspended",
+                  suspendedDate: new Date(),
+                  suspensionReason: "Payment failed after multiple attempts",
+                },
+              }
+            );
+
+            // Send final warning
+            await sendEmail(failedInvoice.customer_email, {
+              subject: "🚨 Subscription Suspended - Immediate Action Required",
+              message: `
+                <h2 style="color: #c0392b;">Subscription Suspended</h2>
+                <p>Your ShopGenius Prime subscription has been suspended due to failed payments.</p>
+                <p><strong>Update your payment method now to restore access.</strong></p>
+                <p><a href="https://yoursite.com/billing">Update Payment Method</a></p>
+              `,
+            });
+          } else {
+            // Implement Grace Period
+            const gracePeriodEnd = new Date();
+            gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 7);
+
+            await userCollection.updateOne(
+              { subscriptionId: failedInvoice.subscription },
+              {
+                $set: {
+                  subscriptionStatus: "past_due",
+                  paymentFailedCount: attemptCount,
+                  gracePeriodEnd: gracePeriodEnd,
+                  lastPaymentError:
+                    failedInvoice.last_payment_error?.message ||
+                    "Payment failed",
+                  lastPaymentErrorDate: new Date(),
+                },
+              }
+            );
+          }
+
+          break;
+
         default:
           console.log(`Unhandled event type: ${event.type}`);
       }
 
       res.json({ received: true });
     } catch (err) {
-      console.error("Error processing webhook:", err);
+      console.error("Error processing webhook:", {
+        eventType: event.type,
+        eventId: event.id,
+        error: err.message,
+        stack: err.stack,
+      });
       res.status(500).send("Webhook processing failed");
     }
   }
@@ -729,7 +1041,7 @@ async function run() {
             subscriptionId: 1,
             subscriptionStatus: 1,
             subscriptionEndDate: 1,
-            subscriptionStartDate: 1
+            subscriptionStartDate: 1,
           },
         }
       );

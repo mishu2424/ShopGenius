@@ -116,6 +116,11 @@ const PremiumMembership = () => {
         setCancelSubLoading(true);
         try {
           await cancelSubscriptionAsync();
+          Swal.fire({
+            title: "Cancellation!",
+            text: "Cancelled subscription successfully!.",
+            icon: "success",
+          });
           setCancelSubLoading(false);
         } catch (err) {
           toast.error(err.message);
@@ -394,10 +399,10 @@ const PremiumMembership = () => {
                     className={`disabled:bg-blue-200 mt-4 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 active:scale-[.99] transition shadow-lg shadow-blue-900/30 py-3 font-semibold`}
                   >
                     {cancelSubLoading ? (
-                      <span>
-                        <FaSpinner className="animate-spin m-auto" />
-                        Processing...
-                      </span>
+                      <div className="flex items-center justify-center gap-2">
+                        <FaSpinner className="animate-spin" />
+                        <h5 className="text-sm">Processing...</h5>
+                      </div>
                     ) : (
                       "Cancel Subscription"
                     )}
