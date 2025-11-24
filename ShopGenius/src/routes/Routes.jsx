@@ -24,6 +24,11 @@ import MyCarts from "../pages/Dashboard/User/MyCarts";
 import PaymentSuccess from "../components/Shared/PaymentSuccess";
 import PaymentFail from "../components/Shared/PaymentFail";
 import SubscriptionSuccess from "../components/Shared/SubscriptionSuccess";
+import ReturnsOrders from "../components/Home/Returns&Orders/ReturnsOrders";
+import Returns from "../components/Home/Returns&Orders/Returns";
+import Orders from "../components/Home/Returns&Orders/Orders";
+import OrderSummaryInvoice from "../components/Home/Returns&Orders/OrderSummaryInvoice";
+import OrderDetails from "../components/Home/Returns&Orders/OrderDetails";
 
 export const router = createBrowserRouter([
   {
@@ -73,6 +78,28 @@ export const router = createBrowserRouter([
         path: `/products`,
         element: <Products />,
       },
+      {
+        path:'/returns&orders',
+        element:<ReturnsOrders/>,
+        children:[
+          {
+            index:true,
+            element:<Returns/>
+          },
+          {
+            path:'orders',
+            element:<Orders/>
+          },
+          {
+            path:'order-summary/:order_id',
+            element:<OrderSummaryInvoice/>
+          },
+          {
+            path:'order-details/:order_id',
+            element:<OrderDetails/>
+          }
+        ]
+      }
     ],
   },
   {

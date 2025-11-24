@@ -9,6 +9,7 @@ import { axiosSecure } from "../../hooks/useAxiosSecure";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import { Link } from "react-router-dom";
 import UpdateDeliveryModal from "../Modal/UpdateDeliveryModal";
+import moment from "moment";
 
 const BookingDataRow = ({ order, refetch, dashboardStatus }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -39,7 +40,7 @@ const BookingDataRow = ({ order, refetch, dashboardStatus }) => {
       mutationFn: async () => {
         const { data } = await axiosSecure.patch(
           `/update-product-sold-count/${order.productBookingId}`,
-          { sold_count: order?.sold_count - order?.quantity }
+          { sold_count: order?.quantity, orderedQuantity:order?.quantity, source:'booking-data' }
         );
         return data;
       },
@@ -64,6 +65,10 @@ const BookingDataRow = ({ order, refetch, dashboardStatus }) => {
     if (order?.deliveryStatus === "Left-the-warehouse") {
       return toast.error("You can not cancel it at this moment as it already left the warehouse.");
     }
+    // check if return period is still valid
+    const isReturnValid = moment().isSameOrBefore(moment(order?.returningEndDate, "MM/DD/YYYY, h:mm:ss A"));
+    if(!isReturnValid) return toast.error("Return period has been expired!!");
+
     try {
       await cancelOrderAsync(reason);
       const data = await updateQuantityStatus();
@@ -220,7 +225,7 @@ const BookingDataRow = ({ order, refetch, dashboardStatus }) => {
           </div>
         ) : (
           <button
-          disabled={order?.deliveryStatus === "Delivered"}
+          // disabled={order?.deliveryStatus === "Delivered"}
             onClick={() => setIsDeleteModalOpen(true)}
             className="disabled:text-red-200 disabled:cursor-not-allowed relative cursor-pointer inline-block px-3 py-1 font-semibold text-green-900 leading-tight"
           >

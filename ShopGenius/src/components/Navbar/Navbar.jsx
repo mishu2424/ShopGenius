@@ -18,7 +18,7 @@ const Navbar = ({ navbarRef }) => {
   const [time, setTime] = useState(null);
   const { user, logOut } = useAuth() || {};
   const { location, getLocation } = useMyLocation();
-  const [carts, isCartLoading] = useCart();
+  const [, totalCartItems, isCartLoading] = useCart();
   const navigate = useNavigate();
   const [value, setValue] = useState(location?.address || null);
   const { searchTxt, setSearchTxt, setCurrentPage, setCategory } =
@@ -272,15 +272,31 @@ const Navbar = ({ navbarRef }) => {
         </div>
 
         <div className="flex items-center gap-2">
-          <NavLink to={`/returns&orders`}>
-            <span className="text-sm">Returns & orders</span>
+          <NavLink
+            to={`/returns&orders`}
+            className={({ isActive, isPending }) =>
+              `relative px-2 text-sm transition-all ${
+                isPending
+                  ? "pending"
+                  : isActive
+                  ? "text-blue-500"
+                  : "border-transparent"
+              }`
+            }
+          >
+            <span className="text-sm">
+              Returns{" "}
+              <span className="text-lg py-0 my-0 font-semibold block">
+                & Orders
+              </span>
+            </span>
           </NavLink>
           {user && user?.email && (
             <Link to={`/carts`}>
               <div className="relative inline-flex ">
                 <FaCartShopping size={24} className="text-white" />
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-semibold rounded-full px-1.5">
-                  {user ? carts?.length : 0}
+                  {user && user?.email ? totalCartItems : 0}
                 </span>
               </div>
             </Link>

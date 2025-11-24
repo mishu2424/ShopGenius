@@ -12,7 +12,7 @@ import Container from "../Shared/Container";
 import usePopularProducts from "../../hooks/usePopularProducts";
 import useRecentBoughtProducts from "../../hooks/useRecentBoughtProducts";
 const Banner = () => {
-  const [carts, isCartLoading] = useCart();
+  const [carts,, isCartLoading] = useCart();
   const [popularProducts, isPopularProductsLoading] = usePopularProducts();
   const [recentBoughtProducts, isBoughtProductsLoading] =
     useRecentBoughtProducts(false);

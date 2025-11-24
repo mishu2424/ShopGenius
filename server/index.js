@@ -17,6 +17,7 @@ let cartCollection;
 let userCollection;
 let bookingCollection;
 let pendingCheckoutCollection;
+let cancelCollection;
 
 // middleware
 const corsOptions = {
@@ -297,7 +298,7 @@ app.post(
                   </p>
 
                   <p style="text-align: center; margin-top: 15px;">
-                    <a href="${process.env.FRONT_END_URL}/premium"
+                    <a href="${process.env.FRONT_END_URL}"
                        style="background: #3498db; color: #fff; padding: 12px 24px; 
                        text-decoration: none; border-radius: 6px; display: inline-block;">
                       Reactivate ShopGenius Premium
@@ -640,7 +641,7 @@ const verifyToken = async (req, res, next) => {
 
 // send email using nodemailer
 const sendEmail = async (emailAddress, emailData) => {
-  console.log("Email address", emailAddress, "Email data", emailData);
+  // console.log("Email address", emailAddress, "Email data", emailData);
   const transporter = nodemailer.createTransport({
     service: "gmail",
     host: "smtp.gmail.com",
@@ -685,6 +686,9 @@ async function run() {
     pendingCheckoutCollection = client
       .db("Shop-Genius-db")
       .collection("pendingCheckouts");
+    cancelCollection = client
+      .db("Shop-Genius-db")
+      .collection("Orders-cancellation");
 
     // auth related api
     app.post("/jwt", async (req, res) => {
@@ -852,17 +856,83 @@ async function run() {
 
     app.patch(`/update-product-sold-count/:id`, async (req, res) => {
       const id = req?.params?.id;
-      const { sold_count } = req?.body;
-      const updatedDoc = {
-        $set: {
-          sold_count,
-        },
-      };
-      const result = await productCollection.updateOne(
-        { _id: new ObjectId(id) },
-        updatedDoc
-      );
-      res.send(result);
+      const { sold_count, orderedQuantity, source } = req?.body || {};
+      const existingProduct = await productCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      if (source === "booking-data") {
+        if (existingProduct) {
+          const updatedSTock =
+            existingProduct?.availability?.stock + Number(orderedQuantity);
+          let updatedDoc;
+          if (0 < updatedSTock < 50) {
+            updatedDoc = {
+              $set: {
+                sold_count: existingProduct?.sold_count - Number(sold_count),
+                "availability.stock": updatedSTock,
+                "availability.status": "low_stock",
+                "availability.available": true,
+              },
+            };
+          }
+          if (updatedSTock > 50) {
+            updatedDoc = {
+              $set: {
+                sold_count: existingProduct?.sold_count - Number(sold_count),
+                "availability.stock": updatedSTock,
+                "availability.status": "in_stock",
+                "availability.available": true,
+              },
+            };
+          }
+          const result = await productCollection.updateOne(
+            { _id: new ObjectId(id) },
+            updatedDoc
+          );
+          res.send(result);
+        }
+        return;
+      }
+      if (existingProduct) {
+        const updatedSTock =
+          existingProduct?.availability?.stock - Number(orderedQuantity);
+        let updatedDoc;
+        if (updatedSTock === 0) {
+          updatedDoc = {
+            $set: {
+              sold_count: existingProduct?.sold_count + Number(sold_count),
+              "availability.stock": updatedSTock,
+              "availability.available": false,
+              "availability.status": "out_of_stock",
+            },
+          };
+        }
+        if (updatedSTock < 50) {
+          updatedDoc = {
+            $set: {
+              sold_count: existingProduct?.sold_count + Number(sold_count),
+              "availability.stock": updatedSTock,
+              "availability.status": "low_stock",
+              "availability.available": true,
+            },
+          };
+        }
+        if (updatedSTock > 50) {
+          updatedDoc = {
+            $set: {
+              sold_count: existingProduct?.sold_count + Number(sold_count),
+              "availability.stock": updatedSTock,
+              "availability.available": true,
+              "availability.status": "in_stock",
+            },
+          };
+        }
+        const result = await productCollection.updateOne(
+          { _id: new ObjectId(id) },
+          updatedDoc
+        );
+        res.send(result);
+      }
     });
 
     //recently-visited product
@@ -1045,7 +1115,7 @@ async function run() {
           },
         }
       );
-      console.log(isSubscribed);
+      // console.log(isSubscribed);
       return res.send(isSubscribed);
     });
 
@@ -1095,12 +1165,12 @@ async function run() {
           });
         }
 
-        console.log("subs", subscription);
+        // console.log("subs", subscription);
 
         // Step 2: Get the current subscription item (the thing being billed)
         const subscriptionItemId = subscription.items.data[0].id;
 
-        console.log(subscription);
+        // console.log(subscription);
 
         // Step 3: Update the subscription with new price
         const updatedSubscription = await stripe.subscriptions.update(
@@ -1182,7 +1252,9 @@ async function run() {
           {
             $set: {
               subscriptionStatus: "active",
-              subscriptionEndDate: null,
+              subscriptionEndDate: new Date(
+                updatedSubscription.current_period_end * 1000
+              ),
               subscriptionUpdatedAt: new Date(),
               subscriptionReactivatedAt: new Date(),
             },
@@ -1269,7 +1341,7 @@ async function run() {
     });
 
     // payments
-    app.post("/create-payment-intent", async (req, res) => {
+    /*     app.post("/create-payment-intent", async (req, res) => {
       const price = req?.body?.total;
       // console.log('price',price);
       //stripe accepts price in cents which is why converted it into cents by multiplying it with 100;
@@ -1290,12 +1362,17 @@ async function run() {
 
       // send it to client
       res.send({ clientSecret: client_secret });
-    });
+    }); */
 
     // server: create-checkout-session
-    app.post(`/create-checkout-session`, async (req, res) => {
+    app.post(`/create-checkout-session`, verifyToken, async (req, res) => {
       try {
-        const items = Array.isArray(req.body?.items) ? req.body.items : [];
+        const items = Array.isArray(req.body?.items)
+          ? req.body.items
+          : typeof req?.body?.items === "object" && req.body.items !== null
+          ? [req?.body?.items]
+          : [];
+        console.log("items received", items);
 
         // 1) create a short token and store items server-side
         const checkoutToken = randomUUID();
@@ -1318,6 +1395,17 @@ async function run() {
             },
             quantity: Number(item.quantity) || 1,
           })),
+
+          invoice_creation: {
+            enabled: true,
+            invoice_data: {
+              description: `Order Invoice`,
+              footer: "Thank you for your purchase!",
+              metadata: {
+                order_token: checkoutToken,
+              },
+            },
+          },
 
           // keep metadata tiny (<500 chars per value!)
           metadata: {
@@ -1344,11 +1432,24 @@ async function run() {
       if (!session_id)
         return res.status(400).json({ error: "Missing_session_id" });
 
-      const session = await stripe.checkout.sessions.retrieve(session_id, {
-        expand: ["payment_intent"], // so you can read session.payment_intent.id
+      const existingBooking = await bookingCollection.findOne({
+        sessionId: session_id,
       });
 
-      // ✅ fetch items from your DB using the token you put in metadata
+      if (existingBooking) {
+        return res.json({
+          alreadyProcessed: true,
+          booking: existingBooking,
+        });
+      }
+
+      const session = await stripe.checkout.sessions.retrieve(session_id, {
+        expand: ["payment_intent", "invoice"], // so you can read session.payment_intent.id
+      });
+
+      console.log("ses found", session);
+
+      // fetch items from DB using the token put in metadata
       const token = session?.metadata?.token;
       if (!token)
         return res.status(400).json({ error: "Missing_token_in_metadata" });
@@ -1360,6 +1461,21 @@ async function run() {
 
       const items = pending.items || [];
 
+      // Get invoice data if available
+      let invoiceData = null;
+      if (session.invoice) {
+        invoiceData = {
+          payment_intent_id: session.payment_intent.id,
+          invoiceId: session.invoice,
+          invoice_pdf: session.invoice.invoice_pdf,
+          hosted_invoice_url: session.invoice.hosted_invoice_url,
+          email: session.customer_details.email,
+          status: session.payment_intent.status,
+          amount_paid: session.amount_total,
+          created: session.payment_intent.created,
+        };
+      }
+
       // (optional) Stripe-computed line items, if you want quantity/amount from Stripe too
       const li = await stripe.checkout.sessions.listLineItems(session.id, {
         limit: 100,
@@ -1370,6 +1486,7 @@ async function run() {
         session,
         items,
         lineItems: li.data,
+        invoice: invoiceData,
       });
     });
 
@@ -1463,14 +1580,25 @@ async function run() {
               });
             }
             // console.log(item);
-            const { date, transactionId, currency, deliveryStatus } = booking;
-            console.log("from booking", booking, "date", date);
-            const formedDoc = {
-              ...item,
+            const {
+              sessionId,
               date,
               transactionId,
               currency,
               deliveryStatus,
+              invoice,
+              returningEndDate,
+            } = booking;
+            console.log("from booking", booking, "date", date);
+            const formedDoc = {
+              ...item,
+              sessionId,
+              date,
+              transactionId,
+              returningEndDate,
+              currency,
+              deliveryStatus,
+              invoice,
             };
             const result = await bookingCollection.insertOne(formedDoc);
             console.log("result", result);
@@ -1562,6 +1690,7 @@ async function run() {
       // let cats;
       if (result.length > 0) {
         if (recentBoughtCategories == "true") {
+          console.log("result", result);
           const uniqueCategories = [
             ...new Set(result.map((res) => res.category)),
           ];
@@ -1599,27 +1728,95 @@ async function run() {
       const result = await cartCollection
         .find({ "userInfo.email": email })
         .toArray();
-      res.send(result);
+
+      const totalCartItems = await cartCollection
+        .aggregate([
+          {
+            $group: {
+              _id: null,
+              totalItems: { $sum: "$quantity" },
+            },
+          },
+        ])
+        .toArray();
+
+      console.log("all carts", result, "totalCartItems", totalCartItems);
+      res.send({ result, totalCartItems: totalCartItems[0]?.totalItems });
     });
 
     app.post(`/cart`, verifyToken, async (req, res) => {
       const { cart } = req?.body;
-      console.log(cart);
-      const cartItem = { ...cart, date: Date.now() };
+      console.log("cart", cart);
+      const cartItem = { ...cart, updatedAt: Date.now() };
       // Check if this user already added this product
-      console.log(cart?.userInfo);
+      console.log(cartItem);
       const isAlreadyExist = await cartCollection.findOne({
         "userInfo.email": cart?.userInfo?.email,
         productId: cart.productId,
       });
 
       if (isAlreadyExist) {
+        console.log("alreadyexists", isAlreadyExist);
+        const strId = `${isAlreadyExist?._id}`;
+        if (cart?.source === "returnsOrders") {
+          if (cart?.quantity > isAlreadyExist?.quantity) {
+            const result = await cartCollection.updateOne(
+              {
+                _id: new ObjectId(strId),
+              },
+              {
+                $set: {
+                  quantity: cart?.quantity,
+                  totalPrice:
+                    isAlreadyExist?.totalPrice +
+                    (cart?.quantity - isAlreadyExist?.quantity) * cart?.price,
+                  updatedAt: Date.now(),
+                },
+              }
+            );
+
+            return res.send(result);
+          } else if (cart?.quantity < isAlreadyExist?.quantity) {
+            const result = await cartCollection.updateOne(
+              {
+                _id: new ObjectId(strId),
+              },
+              {
+                $set: {
+                  quantity: cart?.quantity,
+                  totalPrice:
+                    isAlreadyExist?.totalPrice -
+                    (isAlreadyExist?.quantity - cart?.quantity) * cart?.price,
+                  updatedAt: Date.now(),
+                },
+              }
+            );
+
+            return res.send(result);
+          }
+        }
+        const result = await cartCollection.updateOne(
+          {
+            _id: new ObjectId(strId),
+          },
+          {
+            $set: {
+              quantity: isAlreadyExist?.quantity + cart?.quantity,
+              totalPrice: isAlreadyExist?.totalPrice + cart?.totalPrice,
+              updatedAt: Date.now(),
+            },
+          }
+        );
+        return res.send(result);
+      }
+
+      /*       if (isAlreadyExist) {
         return res.status(200).json({
           message: "Item already exists in cart",
           inserted: false,
           existingItemId: isAlreadyExist._id,
         });
-      }
+      } */
       const data = await cartCollection.insertOne(cartItem);
       res.send(data);
     });
@@ -1733,14 +1930,45 @@ async function run() {
       console.log(req?.params);
       const result = await bookingCollection
         .find({ "user.email": email })
+        .sort({ _id: -1 })
         .toArray();
+      res.send(result);
+    });
+
+    app.get(`/order-summary/:id`, verifyToken, async (req, res) => {
+      const { id } = req?.params;
+      console.log(id);
+      const result = await bookingCollection.findOne({ _id: new ObjectId(id) });
+      console.log(result);
       res.send(result);
     });
 
     app.delete(`/cancel-order/:id`, verifyToken, async (req, res) => {
       const id = req?.params?.id;
+      const { reason } = req?.query;
+      const savedOrder = await bookingCollection.findOne({
+        _id: new ObjectId(id),
+      });
+
+      const canceledOrder = {
+        ...savedOrder,
+        cancelOrderId: `${savedOrder._id}`,
+        canceledAt: Date.now(),
+        cancellationReason: reason ? reason : "unknown",
+        returnedStatus:
+          savedOrder?.deliveryStatus === "delivered" ? false : true,
+      };
+      delete canceledOrder?._id;
+      await cancelCollection.insertOne(canceledOrder);
+
+      // deleting
       const result = await bookingCollection.deleteOne({
         _id: new ObjectId(id),
+      });
+
+      sendEmail(canceledOrder?.user?.email, {
+        subject: "Cancellation!",
+        message: `You have successfully cancelled the order. Transaction id : ${canceledOrder?.transactionId}`,
       });
       res.send(result);
     });

@@ -27,17 +27,17 @@ import useMyLocation from "../../hooks/useMyLocation";
 import { IoChevronDownCircleOutline } from "react-icons/io5";
 import useSubscription from "../../hooks/useSubscription";
 import LoadingSpinner from "../Shared/LoadingSpinner";
+import { useMutation } from "@tanstack/react-query";
+import { axiosSecure } from "../../hooks/useAxiosSecure";
+import toast from "react-hot-toast";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
   const [copied, setCopied] = useState(false);
-  const [comment, setComment] = useState("");
-  const [deliveryPreference, setDeliveryPreference] =
-    useState("Leave at my door");
+  const [processing, setProcessing] = useState(false);
   const { location, getLocation } = useMyLocation();
   const [value, setValue] = useState(location?.address || null);
-  // console.log(bookingInfo);
+  console.log(bookingInfo);
   const [subscription, userSubscriptionLoading] = useSubscription();
 
   const { user } = useAuth();
@@ -59,6 +59,87 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
     copy("4242424242424242");
     setCopied(true);
   };
+
+  // checkout-payment
+  const { mutateAsync: paymentAsync } = useMutation({
+    mutationKey: ["checkout-payment"],
+    mutationFn: async (items) => {
+      const { data } = await axiosSecure.post(`/create-checkout-session`, {
+        items,
+      });
+      console.log(data);
+      return data;
+    },
+    onSuccess: () => {
+      // setProcessing(false);
+    },
+    onError: () => {
+      setProcessing(false);
+    },
+  });
+
+  const checkOutPayment = async (e) => {
+    e.preventDefault();
+    setProcessing(true);
+    try {
+      if(!bookingInfo?.availability?.stock>bookingInfo?.quantity){
+        toast.error(`Only ${bookingInfo?.availability?.stock} items are available in the stock right now!!!`);
+        return;
+      }
+      const address = value.label;
+      const comment = e.target.comment.value;
+      console.log("hit");
+      const deliveryPreference = e.target.deliveryPreference.value;
+      if (!address) {
+        toast.error("Please provide your address");
+        return null;
+      }
+
+      const deliveryInformation = {
+        address,
+        comment,
+        deliveryPreference,
+      };
+
+      console.log(deliveryInformation);
+
+      const { title, brand, category, totalPrice, quantity,  } =
+        bookingInfo;
+      const booking = {
+        title,
+        brand,
+        category,
+        originalPrice:bookingInfo?.salePrice ?? bookingInfo?.price,
+        price: totalPrice,
+        quantity,
+        selectedImage: bookingInfo?.selectedImage,
+        selectedColor: bookingInfo?.selectedColor,
+        productBookingId: bookingInfo?._id,
+        sold_count: bookingInfo?.sold_count + bookingInfo?.quantity,
+        date: new Date(),
+        user: {
+          email: user?.email,
+          name: user?.displayName,
+          photoURL: user?.photoURL,
+        },
+        seller: bookingInfo?.seller,
+        deliveryStatus: "Pending",
+        deliveryInformation,
+      };
+      console.log(booking);
+
+      const data = await paymentAsync(booking);
+      console.log(data?.url);
+      window.location.href = data?.url;
+      setProcessing(false);
+      console.log(booking);
+    } catch (err) {
+      toast.error(err.message);
+      setProcessing(false);
+    }
+  };
+
+  console.log(bookingInfo);
 
   if (userSubscriptionLoading) return <LoadingSpinner />;
   return (
@@ -130,109 +211,129 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
                           </div>
                         )}
                       </div>
-                      <Field>
-                        <Label className="text-sm/6 font-medium text-white">
-                          Delivery preference
-                        </Label>
-                        <Description className="text-sm/6 text-gray-500">
-                          Tell us how you'd like your order delivered.
-                        </Description>
-                        <div className="relative">
-                          <Select
-                            required
-                            onChange={(e) =>
-                              setDeliveryPreference(e.target.value)
-                            }
+                      <form onSubmit={checkOutPayment}>
+                        <Field>
+                          <Label className="text-sm/6 font-medium text-white">
+                            Delivery preference
+                          </Label>
+                          <Description className="text-sm/6 text-gray-500">
+                            Tell us how you'd like your order delivered.
+                          </Description>
+                          <div className="relative">
+                            <Select
+                              required
+                              name="deliveryPreference"
+                              className={clsx(
+                                "mt-3 block w-full appearance-none rounded-lg border-none bg-black px-3 py-1.5 text-sm/6 text-white",
+                                "focus:not-data-focus:outline-none data-focus:outline-2 data-focus:-outline-offset-2 data-focus:outline-white/25",
+                                // Force black text for dropdown options
+                                "[&_option]:text-white"
+                              )}
+                              defaultValue="Leave at my door"
+                            >
+                              <option>Leave at my door</option>
+                              <option>Hand it to me directly</option>
+                            </Select>
+                            <IoChevronDownCircleOutline
+                              className="group pointer-events-none absolute top-2.5 right-2.5 size-4 fill-white/60 text-white"
+                              aria-hidden="true"
+                            />
+                          </div>
+                        </Field>
+                        <Field className={`mt-3`}>
+                          <Label className="text-sm/6 font-medium text-gray-800">
+                            Delivery notes
+                          </Label>
+                          <Description className="text-sm/6 text-gray-500">
+                            Do you need let us know anything?
+                          </Description>
+                          <Textarea
+                            name="comment"
+                            rows={3}
                             className={clsx(
-                              "mt-3 block w-full appearance-none rounded-lg border-none bg-black px-3 py-1.5 text-sm/6 text-white",
-                              "focus:not-data-focus:outline-none data-focus:outline-2 data-focus:-outline-offset-2 data-focus:outline-white/25",
-                              // Force black text for dropdown options
-                              "[&_option]:text-white"
+                              "mt-3 block w-full resize-none rounded-lg border-none bg-black px-3 py-1.5 text-sm/6 text-white",
+                              "focus:not-data-focus:outline-none data-focus:outline-2 data-focus:-outline-offset-2 data-focus:outline-white/25"
                             )}
-                            defaultValue="Leave at my door"
-                          >
-                            <option>Leave at my door</option>
-                            <option>Hand it to me directly</option>
-                          </Select>
-                          <IoChevronDownCircleOutline
-                            className="group pointer-events-none absolute top-2.5 right-2.5 size-4 fill-white/60 text-white"
-                            aria-hidden="true"
                           />
+                        </Field>
+                        <div className="mt-2">
+                          <p className="text-sm text-gray-500">
+                            User: {user?.displayName}
+                          </p>
                         </div>
-                      </Field>
-
-                      <Field className={`mt-3`}>
-                        <Label className="text-sm/6 font-medium text-gray-800">
-                          Delivery notes
-                        </Label>
-                        <Description className="text-sm/6 text-gray-500">
-                          Do you need let us know anything?
-                        </Description>
-                        <Textarea
-                          onChange={(e) => setComment(e.target.value)}
-                          rows={3}
-                          className={clsx(
-                            "mt-3 block w-full resize-none rounded-lg border-none bg-black px-3 py-1.5 text-sm/6 text-white",
-                            "focus:not-data-focus:outline-none data-focus:outline-2 data-focus:-outline-offset-2 data-focus:outline-white/25"
-                          )}
-                        />
-                      </Field>
+                        <div className="mt-2">
+                          <p className="text-sm text-gray-500">
+                            Price: ${bookingInfo?.totalPrice}
+                          </p>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-sm text-gray-500">
+                            Delivery Fee: $
+                            {subscription?.hasSubscription ? 0 : 7.49}
+                          </p>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-sm text-gray-500">
+                            Total: $
+                            {subscription?.hasSubscription
+                              ? bookingInfo?.totalPrice
+                              : Number(bookingInfo?.totalPrice) + 7.49}
+                          </p>
+                        </div>
+                        {/* apply coupon */}
+                        <div className="mt-2 flex items-center justify-between">
+                          <input
+                            type="text"
+                            placeholder="Apply coupon"
+                            className="input input-bordered"
+                          />
+                          <button className="btn bg-amber-500 text-white">
+                            Apply
+                          </button>
+                        </div>
+                        <hr className="mt-8 text-gray-200" />
+                        {/* Copy Test Card Info */}
+                        <div className="flex items-center justify-between text-xs bg-gray-100 p-3 rounded-md">
+                          <span className="text-gray-700">
+                            For testing, use this card number:
+                            <br />
+                            <span className="font-mono text-sm">
+                              4242 4242 4242 4242
+                            </span>
+                          </span>
+                          <button
+                            onClick={handleCopy}
+                            type="button"
+                            className="ml-2 text-blue-600 hover:text-blue-800"
+                          >
+                            {copied ? (
+                              <IoMdCheckmark />
+                            ) : (
+                              <TiClipboard size={16} />
+                            )}
+                          </button>
+                        </div>{" "}
+                        {/* checkout button */}
+                        <div className="mt-2">
+                          <button
+                            type="submit"
+                            className="btn w-full bg-green-700 text-white"
+                          >
+                            Checkout
+                          </button>
+                        </div>
+                      </form>
                     </div>
                     <div className="mt-2">
-                      <p className="text-sm text-gray-500">
-                        User: {user?.displayName}
-                      </p>
-                    </div>
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500">
-                        Price: ${bookingInfo?.totalPrice}
-                      </p>
-                    </div>
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500">
-                        Delivery Fee: $
-                        {subscription?.hasSubscription ? 0 : 7.49}
-                      </p>
-                    </div>
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500">
-                        Total: $
-                        {subscription?.hasSubscription
-                          ? bookingInfo?.totalPrice
-                          : Number(bookingInfo?.totalPrice) + 7.49}
-                      </p>
-                    </div>
-                    {/* apply coupon */}
-                    <div className="mt-2 flex items-center justify-between">
-                      <input
-                        type="text"
-                        placeholder="Apply coupon"
-                        className="input input-bordered"
-                      />
-                      <button className="btn bg-amber-500 text-white">
-                        Apply
-                      </button>
-                    </div>
-                    <hr className="mt-8 text-gray-200" />
-                    {/* Copy Test Card Info */}
-                    <div className="flex items-center justify-between text-xs bg-gray-100 p-3 rounded-md">
-                      <span className="text-gray-700">
-                        For testing, use this card number:
-                        <br />
-                        <span className="font-mono text-sm">
-                          4242 4242 4242 4242
-                        </span>
-                      </span>
                       <button
-                        onClick={handleCopy}
-                        type="button"
-                        className="ml-2 text-blue-600 hover:text-blue-800"
+                        onClick={closeModal}
+                        className="btn w-full bg-red-600 text-white"
                       >
-                        {copied ? <IoMdCheckmark /> : <TiClipboard size={16} />}
+                        Cancel
                       </button>
-                    </div>{" "}
+                    </div>
                     {/* checkout form */}
-                    <Elements stripe={stripePromise}>
+                    {/*                     <Elements stripe={stripePromise}>
                       <CheckOutForm
                         closeModal={closeModal}
                         bookingInfo={bookingInfo}
@@ -241,7 +342,7 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
                         comment={comment}
                         deliveryPreference={deliveryPreference}
                       />
-                    </Elements>
+                    </Elements> */}
                   </div>
                 </div>
               </DialogPanel>

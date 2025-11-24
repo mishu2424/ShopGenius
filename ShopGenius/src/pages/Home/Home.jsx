@@ -5,6 +5,7 @@ import DiscountedProducts from "../../components/Home/DiscountedProducts";
 import PremiumMembership from "../../components/Home/PremiumMembership/PremiumMembership";
 import RecentBoughtCategories from "../../components/Home/RecentBoughtCategories/RecentBoughtCategories";
 import RecentlyVisitedProducts from "../../components/Home/RecentlyVisitedProducts/RecentlyVisitedProducts";
+import Delivery from "../../components/Shared/Delivery";
 
 
 const Home = () => {
@@ -20,6 +21,7 @@ const Home = () => {
       <RecentBoughtCategories/>
       <RecentlyVisitedProducts/>
       <PremiumMembership />
+      <Delivery/>
     </div>
   );
 };

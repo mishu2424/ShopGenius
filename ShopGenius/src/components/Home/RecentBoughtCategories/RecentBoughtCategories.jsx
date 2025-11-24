@@ -1,5 +1,4 @@
 import React from "react";
-import useRecentBoughtProducts from "../../../hooks/useRecentBoughtProducts";
 import Container from "../../Shared/Container";
 import LoadingSpinner from "../../Shared/LoadingSpinner";
 import Title from "../../Shared/Title";

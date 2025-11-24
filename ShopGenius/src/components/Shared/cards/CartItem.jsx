@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaTrashAlt } from "react-icons/fa";
 import { FaMinus, FaPlus } from "react-icons/fa6";
 import { Link } from "react-router-dom";
 
-const CartItem = ({ item, handleRemove, onQuantityChange }) => {
-  const [quantity, setQuantity] = useState(item?.quantity);
+const CartItem = ({ item, handleRemove, onQuantityChange, quantity, setQuantity }) => {
+  useEffect(()=>{
+    setQuantity(item?.quantity);
+  },[])
 
   const handleQtyChange = (newQty) => {
     if (newQty < 1) return;
     setQuantity(newQty);
+    console.log(quantity);
     onQuantityChange(item._id, newQty);
   };
 

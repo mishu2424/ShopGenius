@@ -24,10 +24,8 @@ const AddressModal = ({
   totalPrice,
   processing,
   loc,
-  setLoc
+  setLoc,
 }) => {
-
-
   return (
     <Dialog
       open={isOpen}
@@ -144,7 +142,7 @@ const AddressModal = ({
                     <FaSpinner className="m-auto animate-spin" />
                   </span>
                 ) : (
-                  `Pay $${totalPrice}`
+                  `Pay $${Number(totalPrice.toFixed(2))}`
                 )}
               </button>
             </Fieldset>

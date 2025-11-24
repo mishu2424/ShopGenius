@@ -7,7 +7,7 @@ import CartDataRow from "../../../components/TableRows/CartDataRow";
 import { useState } from "react";
 
 const MyCarts = () => {
-  const [carts, isCartLoading, refetch] = useCart();
+  const [carts, ,isCartLoading, refetch] = useCart();
 
   if (isCartLoading) return <LoadingSpinner />;
   console.log(carts);

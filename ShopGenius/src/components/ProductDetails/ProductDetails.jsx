@@ -11,13 +11,15 @@ import useCart from "../../hooks/useCart";
 import { Helmet } from "react-helmet-async";
 import BookingModal from "../Modal/BookingModal";
 import useRecentlyViewed from "../../hooks/useRecentlyViewed";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
 
 const ProductDetails = () => {
   const axiosCommon = useAxiosCommon();
   const axiosSecure = useAxiosSecure();
   const { user } = useAuth() || {};
   const navigate = useNavigate();
-  const [, , refetch] = useCart();
+  const [, , , refetch] = useCart();
   const { id } = useParams();
   const location = useLocation();
   const { addToRecentlyViewed } = useRecentlyViewed();
@@ -83,7 +85,7 @@ const ProductDetails = () => {
     [priceNow, quantity]
   );
 
-  console.log(totalPrice, quantity);
+  // console.log(totalPrice, quantity);
 
   const { mutateAsync: cartMutateAsync } = useMutation({
     mutationKey: ["user-cart"],
@@ -97,7 +99,6 @@ const ProductDetails = () => {
   });
 
   const handleAddToCart = async () => {
-    console.log(totalPrice);
     if (user && user?.email) {
       if (user?.email === product?.seller?.email) {
         return toast.error("You can not save your own product in the cart");
@@ -114,29 +115,13 @@ const ProductDetails = () => {
           name: user?.displayName || "unknown",
           email: user?.email,
           photoURL: user?.photoURL,
-        },
-        // productId: product?._id,
-        // orderQuantity: quantity,
-        // img: currentImg,
-        // title: product?.title,
-        // brand: product?.brand,
-        // description: product?.description,
-        // category: product?.category,
-        // price: Number(priceNow * quantity),
-        // rating: product?.rating,
-        // discount: product?.discount,
-        // availability: product?.availability,
-        // seller: product?.seller,
-        // userInfo: {
-        //   name: user?.displayName || "unknown",
-        //   email: user?.email,
-        // },
+        }
       };
       console.log(cart);
       delete cart?._id;
       try {
         const data = await cartMutateAsync(cart);
-        if (data.insertedId) {
+        if (data.insertedId || data.modifiedCount) {
           toast.success(`Item has been added to cart`);
         } else {
           toast(`${data?.message}!`, {
@@ -201,11 +186,13 @@ const ProductDetails = () => {
             {/* Main image */}
             <div className="order-1 lg:order-2 bg-white border border-gray-200 rounded p-3 flex items-center justify-center">
               {currentImg ? (
-                <img
-                  src={currentImg}
-                  alt={product?.title}
-                  className="max-h-[520px] w-full object-contain"
-                />
+                <Zoom>
+                  <img
+                    src={currentImg}
+                    alt={product?.title}
+                    className="max-h-[520px] w-full object-contain"
+                  />
+                </Zoom>
               ) : (
                 <div className="h-[420px] w-full grid place-items-center text-gray-400">
                   No image
@@ -376,7 +363,8 @@ const ProductDetails = () => {
               </button>
               <button
                 onClick={openModal}
-                className="btn cursor-pointer col-span-2 sm:col-span-1 rounded-full bg-[#2381D3] hover:bg-blue-700 text-white font-medium px-6 py-3 transition shadow"
+                disabled={product?.availability?.stock <= 0}
+                className="btn cursor-pointer col-span-2 sm:col-span-1 rounded-full disabled:bg-blue-200 disabled:cursor-not-allowed bg-[#2381D3] hover:bg-blue-700 text-white font-medium px-6 py-3 transition shadow"
               >
                 Buy Now
               </button>

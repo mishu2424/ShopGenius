@@ -19,8 +19,9 @@ import useMyLocation from "../../hooks/useMyLocation";
 const Carts = () => {
   const axiosSecure = useAxiosSecure();
   const navigate = useNavigate();
-  const [carts, isCartLoading, refetch] = useCart();
+  const [carts, , isCartLoading, refetch] = useCart();
   const [cartsData, setCartsData] = useState([]);
+  const [quantity, setQuantity] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -67,7 +68,7 @@ const Carts = () => {
       navigate(`/carts`);
     },
   });
-  console.log([...carts]);
+  // console.log([...carts]);
 
   const handleRemove = async (id) => {
     try {
@@ -90,9 +91,31 @@ const Carts = () => {
   };
 
   // ✅ total updates dynamically based on cartsData
-  const total = cartsData.reduce(
+  /*   const total = cartsData.reduce(
     (sum, item) => sum + (item?.totalPrice || 0) * (item?.orderQuantity || 1),
     0
+  ); */
+
+  const total = useMemo(
+    () =>
+      cartsData.reduce((sum, item) => {
+        sum = item?.totalPrice;
+        console.log(item);
+        console.log(item?.totalPrice, item?.quantity === quantity);
+        if (item?.quantity === quantity) {
+          return sum;
+        }
+        if (quantity > item.quantity) {
+          sum = sum + (quantity - item?.quantity || 1) * item?.price;
+          console.log(item?.orderQuantity, sum);
+          return sum;
+        } else {
+          sum = sum - (item?.quantity - quantity || 1) * item?.price;
+          console.log(item?.orderQuantity, sum);
+          return sum;
+        }
+      }, 0),
+    [cartsData, quantity]
   );
 
   const totalItems = useMemo(
@@ -125,15 +148,6 @@ const Carts = () => {
     e.preventDefault();
     setProcessing(true);
     try {
-      // const availableItems = carts.filter((cart) => {
-      //   console.log(cart?.availability?.available, cart?.availability?.status);
-      //   return (
-      //     cart?.availability?.available &&
-      //     cart?.availability?.status !== "Out of Stock" &&
-      //     cart?.availability.stock > cart?.availability?.quantity
-      //   );
-      // });
-      // console.log(availableItems);
       const address = loc?.label;
       const comment = e.target.comment.value;
       const deliveryPreference = e.target.deliveryPreference.value;
@@ -148,11 +162,6 @@ const Carts = () => {
 
       const sortedCartItems = carts
         .filter((cart) => {
-          // console.log(
-          //   cart?.availability?.available,
-          //   cart?.availability?.status,
-          //   cart?.availability.stock > cart?.quantity
-          // );
           if (!cart?.availability?.available) {
             toast.error(
               `You can not buy ${cart?.title} as it is either out of stock or not available at this moment! Remove this from before proceeding to checkout`
@@ -237,6 +246,8 @@ const Carts = () => {
                 refetch={refetch}
                 handleRemove={handleRemove}
                 onQuantityChange={handleQuantityChange}
+                quantity={quantity}
+                setQuantity={setQuantity}
               />
             ))}
           </div>
