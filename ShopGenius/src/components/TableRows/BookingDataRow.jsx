@@ -58,6 +58,14 @@ const BookingDataRow = ({ order, refetch, dashboardStatus }) => {
       },
     });
 
+  const {mutateAsync:refundProcess}=useMutation({
+    mutationKey:['refund-money',order?.sessionId],
+    mutationFn:async({sessionId,reason,sellerEmail})=>{
+      const {data}=await axiosSecure.patch(`/request/refund/${sessionId}`,{reason,sellerEmail});
+      return data;
+    }
+  })  
+
   const handleCancelOrder = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -70,9 +78,13 @@ const BookingDataRow = ({ order, refetch, dashboardStatus }) => {
     if(!isReturnValid) return toast.error("Return period has been expired!!");
 
     try {
-      await cancelOrderAsync(reason);
+      const {returnedStatus}=await cancelOrderAsync(reason);
       const data = await updateQuantityStatus();
-      console.log(data);
+      if(returnedStatus && order?.sessionId){
+        const sessionId=order?.sessionId;
+        const sellerEmail=order?.seller?.email;
+        await refundProcess({sessionId,reason,sellerEmail});
+      }
       if (data.modifiedCount > 0) {
         toast.success("Order has been canceled");
       }

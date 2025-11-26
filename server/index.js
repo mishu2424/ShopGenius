@@ -1490,6 +1490,114 @@ async function run() {
       });
     });
 
+    // request refund
+    app.patch(`/request/refund/:id`, async (req, res) => {
+      const { id } = req?.params;
+      const { reason, sellerEmail } = req?.body;
+      const session = await stripe.checkout.sessions.retrieve(id, {
+        expand: ["customer_details"],
+      });
+      // Get customer email from Stripe
+      const customerEmail =
+        session?.customer_details?.email ||
+        session?.customer_email ||
+        savedOrder?.user?.email;
+
+      const refundInfo = {
+        sellerEmail,
+        customerEmail,
+        refundedMoneyRequest: Date.now(),
+      };
+      const result = await cancelCollection.updateOne(
+        { sessionId: id },
+        {
+          $set: {
+            reason,
+            refundStatus: false,
+            status: "under-consideration",
+            refundInfo,
+          },
+        }
+      );
+      res.send(result);
+    });
+
+    // refund process
+    app.patch(`/refund/:id`, async (req, res) => {
+      const { id } = req?.params;
+      const { reason } = req?.body;
+      const session = await stripe.checkout.sessions.retrieve(id, {
+        expand: ["payment_intent", "customer_details"],
+      });
+      // Get customer email from Stripe
+      const customerEmail =
+        session?.customer_details?.email ||
+        session?.customer_email ||
+        savedOrder?.user?.email;
+
+      let refundResult = null;
+      let result;
+
+      if (session?.payment_intent?.id) {
+        try {
+          // Create a refund
+          refundResult = await stripe.refunds.create({
+            payment_intent: session.payment_intent.id,
+            reason: "requested_by_customer",
+            metadata: {
+              order_id: id,
+              cancellation_reason: reason || "unknown",
+            },
+          });
+
+          // Add refund information to canceled order
+/*           const refund = {
+            refundId: refundResult.id,
+            amount: refundResult.amount / 100,
+            currency: refundResult.currency,
+            status: refundResult.status,
+            created: refundResult.created,
+            customerEmail: customerEmail,
+            sellerEmail: sellerEmail,
+            refundedMoneyDate: Date.now(),
+          }; */
+
+          result = await cancelCollection.updateOne(
+            { sessionId: id },
+            {
+              $set: {
+                "refundInfo.refundId": refundResult.id,
+                "refundInfo.amount": refundResult.amount / 100,
+                "refundInfo.currency": refundResult.currency,
+                "refundInfo.status": refundResult.status,
+                "refundInfo.created": refundResult.created,
+                refundedMoneyDate: Date.now(),
+                refundStatus:true,
+                status:"refunded"
+              },
+            }
+          );
+
+          console.log("session", session);
+          sendEmail(customerEmail, {
+            subject: "Refunded!",
+            message: `Your money has been refunded successfully!! Refund id : ${refundResult.id}`,
+          });
+        } catch (err) {
+          const refundError = err.message;
+          result = await cancelCollection.updateOne(
+            { sessionId: id },
+            {
+              $set: {
+                refundError,
+              },
+            }
+          );
+        }
+        res.send(result);
+      }
+    });
+
     // for monthly subscription
     app.post("/create-subscription-checkout", async (req, res) => {
       try {
@@ -1950,13 +2058,15 @@ async function run() {
         _id: new ObjectId(id),
       });
 
+      const returnedStatus =
+        savedOrder?.deliveryStatus === "delivered" ? false : true;
       const canceledOrder = {
         ...savedOrder,
         cancelOrderId: `${savedOrder._id}`,
         canceledAt: Date.now(),
         cancellationReason: reason ? reason : "unknown",
-        returnedStatus:
-          savedOrder?.deliveryStatus === "delivered" ? false : true,
+        returnedStatus,
+        returnedDate: Date.now(),
       };
       delete canceledOrder?._id;
       await cancelCollection.insertOne(canceledOrder);
@@ -1970,7 +2080,7 @@ async function run() {
         subject: "Cancellation!",
         message: `You have successfully cancelled the order. Transaction id : ${canceledOrder?.transactionId}`,
       });
-      res.send(result);
+      res.send({ result, returnedStatus });
     });
 
     // seller dashboard
@@ -2120,6 +2230,16 @@ async function run() {
         res.send(result);
       }
     );
+
+    // get orders cancellation details
+    app.get(`/canceled-order/:email`, async (req, res) => {
+      const { email } = req?.params;
+      console.log("se", email);
+      const result = await cancelCollection
+        .find({ "refundInfo.sellerEmail": email })
+        .toArray();
+      res.send(result);
+    });
 
     app.patch(
       `/update-delivery-status/:id`,

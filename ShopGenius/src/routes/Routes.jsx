@@ -29,6 +29,7 @@ import Returns from "../components/Home/Returns&Orders/Returns";
 import Orders from "../components/Home/Returns&Orders/Orders";
 import OrderSummaryInvoice from "../components/Home/Returns&Orders/OrderSummaryInvoice";
 import OrderDetails from "../components/Home/Returns&Orders/OrderDetails";
+import OrderCancellation from "../pages/Dashboard/Seller/OrderCancellation";
 
 export const router = createBrowserRouter([
   {
@@ -192,6 +193,14 @@ export const router = createBrowserRouter([
             </SellerRoute>
           </PrivateRoute>
         ),
+      },
+      {
+        path:"orders-cancellation",
+        element:<PrivateRoute>
+          <SellerRoute>
+            <OrderCancellation/>
+          </SellerRoute>
+        </PrivateRoute>
       },
 
       // admin
