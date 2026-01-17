@@ -47,7 +47,7 @@ const WomenSwiper = ({ bestProductsWomen }) => {
           },
           1024: {
             slidesPerView: 4,
-            spaceBetween: 20,
+            spaceBetween: 8,
           },
         }}
         modules={[Navigation]}
@@ -58,7 +58,7 @@ const WomenSwiper = ({ bestProductsWomen }) => {
             <Link to={`/product/${product?._id}`}>
               <div
                 key={product?._id}
-                className="w-full max-w-xs mx-auto md:mx-5 overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800 my-3 hover:scale-105 duration-300 border border-transparent hover:border-blue-500"
+                className="w-full max-w-xs mx-auto md:mx-0 overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800 my-3 duration-300 border border-transparent hover:border-blue-500"
               >
                 <Swiper
                   spaceBetween={30}

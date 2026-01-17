@@ -49,6 +49,19 @@ const ProductDetails = () => {
     },
   });
 
+  // getting coupon info
+  const { data: couponInfo={}, isLoading: CouponInfoLoading } = useQuery({
+    queryKey: ["coupon-info", product?.productId],
+    queryFn: async () => {
+      const { data } = await axiosCommon(
+        `/get-coupon-info/${product?.productId}`
+      );
+      return data;
+    },
+  });
+
+  console.log({ couponInfo });
+
   //save visited product info
   useEffect(() => {
     if (id) {
@@ -115,7 +128,7 @@ const ProductDetails = () => {
           name: user?.displayName || "unknown",
           email: user?.email,
           photoURL: user?.photoURL,
-        }
+        },
       };
       console.log(cart);
       delete cart?._id;
@@ -136,7 +149,7 @@ const ProductDetails = () => {
     }
   };
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading || CouponInfoLoading) return <LoadingSpinner />;
   if (!product)
     return (
       <div className="p-8 text-center text-gray-600">Product not found.</div>
@@ -377,6 +390,7 @@ const ProductDetails = () => {
                   selectedImage: currentImg,
                   quantity,
                   totalPrice,
+                  couponInfo
                 }}
                 refetch={productDataRefetch}
               />

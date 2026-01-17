@@ -87,6 +87,12 @@ const PremiumMembership = () => {
       });
       return data;
     },
+    onSuccess: () => {
+      setCancelSubLoading(false);
+    },
+    onError: () => {
+      setCancelSubLoading(false);
+    },
   });
 
   const cancelSubscription = async () => {
@@ -133,19 +139,20 @@ const PremiumMembership = () => {
   };
 
   // Change plan from monthly to yearly
-  const { mutateAsync: changePlanAsync } = useMutation({
-    mutationFn: async (planType) => {
-      const { data } = await axiosSecure.post("/change-subscription-plan", {
-        subscriptionId: subscription?.subscriptionId,
-        newPlanType: planType,
-      });
-      return data;
-    },
-    onSuccess: () => {
-      // Refetch subscription data
-      queryClient.invalidateQueries(["subscription"]);
-    },
-  });
+  const { mutateAsync: changePlanAsync, isPending: changePlanLoading } =
+    useMutation({
+      mutationFn: async (planType) => {
+        const { data } = await axiosSecure.post("/change-subscription-plan", {
+          subscriptionId: subscription?.subscriptionId,
+          newPlanType: planType,
+        });
+        return data;
+      },
+      onSuccess: () => {
+        // Refetch subscription data
+        queryClient.invalidateQueries(["subscription"]);
+      },
+    });
 
   const handleChangePlan = async (planType) => {
     Swal.fire({
@@ -179,15 +186,19 @@ const PremiumMembership = () => {
         }
         try {
           await changePlanAsync(planType);
-          toast.success(`Successfully switched to Annual plan`);
+          toast.success(
+            `Successfully switched to ${
+              planType === "standard_yearly" ? "Annual" : "Monthly"
+            } plan`
+          );
           Swal.fire({
             title: "Changed Plan!",
             text: "Your plan has been changed successfully!.",
             icon: "success",
           });
-        } catch (err) {
-          console.error("Error changing plan:", err);
-          toast.error(err.message || "Failed to change plan");
+        } catch (error) {
+          console.error("Error changing plan:", error);
+          toast.error(error.message || "Failed to change plan");
         } finally {
           setChangeSubLoading(false);
         }
@@ -251,7 +262,7 @@ const PremiumMembership = () => {
 
   console.log(subscription);
 
-  if (userSubscriptionLoading) return <LoadingSpinner />;
+  if (userSubscriptionLoading || changePlanLoading) return <LoadingSpinner />;
   return (
     <div className="my-10">
       <Container>
@@ -394,9 +405,13 @@ const PremiumMembership = () => {
 
                 {subscription?.hasSubscription && (
                   <button
-                    disabled={loading}
+                    disabled={
+                      loading ||
+                      subscription?.subscriptionStatus ===
+                        "scheduled_cancellation"
+                    }
                     onClick={cancelSubscription}
-                    className={`disabled:bg-blue-200 mt-4 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 active:scale-[.99] transition shadow-lg shadow-blue-900/30 py-3 font-semibold`}
+                    className={`disabled:bg-blue-200 disabled:hover:bg-blue-200 disabled:cursor-not-allowed mt-4 w-full cursor-pointer rounded-xl bg-gradient-to-r bg-blue-500 hover:bg-blue-400 active:scale-[.99] transition shadow-lg shadow-blue-900/30 py-3 font-semibold`}
                   >
                     {cancelSubLoading ? (
                       <div className="flex items-center justify-center gap-2">

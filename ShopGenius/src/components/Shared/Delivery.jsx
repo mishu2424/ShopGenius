@@ -4,7 +4,7 @@ import { RiSecurePaymentFill } from "react-icons/ri";
 import 'animate.css';
 const Delivery = () => {
   return (
-    <div className="flex px-10 items-center justify-around py-14 shadow">
+    <div className="flex flex-wrap gap-5 md:gap-0 px-10 items-center justify-around py-14 shadow">
       <div className="flex items-center gap-3">
         <FaShippingFast size={40}/>
         <h2 className="text-xl font-semibold">Shipping all over Canada</h2>

@@ -13,7 +13,7 @@ import LoadingSpinner from "../../Shared/LoadingSpinner";
 const ReturnsOrders = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [carts, , isCartLoading, refetch] = useCart();
+  const [carts=[], , isCartLoading, refetch] = useCart();
   const [cartsData, setCartsData] = useState([]);
 
   useEffect(() => {
@@ -57,7 +57,12 @@ const ReturnsOrders = () => {
   // --- handle quantity change ---
   const handleQuantityChange = (id, newQty, cart) => {
     console.log(id, newQty);
-    const updatedCart={...cart,cartId:cart?._id,source:'returnsOrders',quantity:newQty};
+    const updatedCart = {
+      ...cart,
+      cartId: cart?._id,
+      source: "returnsOrders",
+      quantity: newQty,
+    };
     delete updatedCart?._id;
     handleToCart(updatedCart);
   };
@@ -110,17 +115,19 @@ const ReturnsOrders = () => {
           <div className="col-span-12 lg:col-span-10">
             <Outlet />
           </div>
-          <div className="border border-transparent shadow-lg grid grid-cols-1 gap-3 p-3 col-span-12 lg:col-span-2 grid-auto-rows-auto">
-            <div className="flex flex-col gap-3">
-              {carts?.map((cart) => (
-                <Cart
-                  key={cart?._id}
-                  cart={cart}
-                  handleQuantityChange={handleQuantityChange}
-                />
-              ))}
+          {carts?.length > 0 && (
+            <div className="border border-transparent shadow-lg grid grid-cols-1 gap-3 p-3 col-span-12 lg:col-span-2 grid-auto-rows-auto">
+              <div className="flex flex-col gap-3">
+                {carts?.map((cart) => (
+                  <Cart
+                    key={cart?._id}
+                    cart={cart}
+                    handleQuantityChange={handleQuantityChange}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
         <Delivery />
       </div>

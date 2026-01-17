@@ -50,7 +50,7 @@ const NeutralSwiper = ({ bestProducts }) => {
           },
           1024: {
             slidesPerView: 4,
-            spaceBetween: 10,
+            spaceBetween: 8,
             centeredSlides: false,
           },
         }}
@@ -62,7 +62,7 @@ const NeutralSwiper = ({ bestProducts }) => {
             <Link to={`/product/${product?._id}`}>
               <div
                 key={product?._id}
-                className="w-full max-w-xs md:mx-5 mx-auto overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800 my-3 hover:scale-105 duration-300 border border-transparent hover:border-blue-500"
+                className="w-full max-w-xs md:mx-0 mx-auto overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800 my-3 duration-300 border border-transparent hover:border-blue-500"
               >
                 <Swiper
                   spaceBetween={30}

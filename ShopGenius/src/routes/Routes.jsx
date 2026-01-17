@@ -30,6 +30,7 @@ import Orders from "../components/Home/Returns&Orders/Orders";
 import OrderSummaryInvoice from "../components/Home/Returns&Orders/OrderSummaryInvoice";
 import OrderDetails from "../components/Home/Returns&Orders/OrderDetails";
 import OrderCancellation from "../pages/Dashboard/Seller/OrderCancellation";
+import CreateCoupons from "../pages/Dashboard/Admin/CreateCoupons";
 
 export const router = createBrowserRouter([
   {
@@ -220,6 +221,16 @@ export const router = createBrowserRouter([
           <PrivateRoute>
             <AdminRoute>
               <ManageUsers />
+            </AdminRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "create-coupons",
+        element: (
+          <PrivateRoute>
+            <AdminRoute>
+              <CreateCoupons />
             </AdminRoute>
           </PrivateRoute>
         ),

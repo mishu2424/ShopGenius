@@ -12,12 +12,12 @@ import Container from "../Shared/Container";
 import usePopularProducts from "../../hooks/usePopularProducts";
 import useRecentBoughtProducts from "../../hooks/useRecentBoughtProducts";
 const Banner = () => {
-  const [carts,, isCartLoading] = useCart();
+  const [carts=[], , isCartLoading] = useCart();
   const [popularProducts, isPopularProductsLoading] = usePopularProducts();
   const [recentBoughtProducts, isBoughtProductsLoading] =
     useRecentBoughtProducts(false);
 
-  // console.log(carts);
+  console.log(carts);
   if (isCartLoading || isPopularProductsLoading) return <LoadingSpinner />;
   return (
     <>
@@ -36,7 +36,7 @@ const Banner = () => {
           <SwiperSlide>
             <Slide
               bannerImg={
-                "https://i.ibb.co/fd7xxphP/beautiful-dark-skinned-woman-surrounded-by-clothes-rack.jpg"
+                "https://i.ibb.co/jCh2WTD/img-2-1.jpg"
               }
             ></Slide>
           </SwiperSlide>

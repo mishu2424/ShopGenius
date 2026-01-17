@@ -175,10 +175,12 @@ const Navbar = ({ navbarRef }) => {
                           <h6 className="text-black text-xs lg:text-sm">
                             {time ? time : ""}
                           </h6>
-                          <div className="text-xs flex items-center gap-2 text-black font-semibold">
-                            <CiLocationOn className="text-black" />
-                            {value?.label && value.label}
-                          </div>
+                          {value?.label && (
+                            <div className="text-xs flex items-center gap-2 text-black font-semibold">
+                              <CiLocationOn className="text-black" />
+                              {value.label}
+                            </div>
+                          )}
                         </div>
                       </li>
                     </ul>
@@ -196,10 +198,12 @@ const Navbar = ({ navbarRef }) => {
             <h6 className="text-white text-xs lg:text-sm">
               {time ? time : ""}
             </h6>
-            <div className="text-xs flex items-center gap-2 text-white font-semibold">
-              <CiLocationOn className="text-white" />
-              {value?.label && value.label}
-            </div>
+            {value?.label && (
+              <div className="text-xs flex items-center gap-2 text-white font-semibold">
+                <CiLocationOn className="text-white" />
+                {value.label}
+              </div>
+            )}
           </div>
           <form className="hidden md:flex" onSubmit={handleSearch}>
             <div className="flex items-center border border-gray-300 rounded-lg">

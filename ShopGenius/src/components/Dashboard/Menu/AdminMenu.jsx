@@ -1,6 +1,7 @@
 import { FaUserCog } from "react-icons/fa";
 import MenuItem from "./MenuItem";
 import { BsGraphUp } from "react-icons/bs";
+import { RiCoupon3Fill } from "react-icons/ri";
 
 const AdminMenu = () => {
   return (
@@ -11,6 +12,11 @@ const AdminMenu = () => {
         icon={BsGraphUp}
       />
       <MenuItem icon={FaUserCog} label="Manage Users" address="manage-users" />
+      <MenuItem
+        icon={RiCoupon3Fill}
+        label="Create Coupons"
+        address="create-coupons"
+      />
     </>
   );
 };

@@ -14,7 +14,7 @@ const Login = () => {
   const [passwordToggle, setPasswordToggle] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
 
-  const { signInWithGoogle, signIn, logOut, resetPassword } = useAuth();
+  const { signInWithGoogle, signIn, logOut, resetPassword, setUser,user } = useAuth();
 
   const [userSignUpLoading, setUserSignUpLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -92,6 +92,7 @@ const Login = () => {
 
     try {
       await resetPassword(email);
+      // setUser({...user,photoURL:user?.photoURL})
       toast.success("Reset email has been sent!");
       setIsResetPasswordOpen(false);
     } catch (err) {

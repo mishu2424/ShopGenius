@@ -11,13 +11,15 @@ import {
   Description,
   Textarea,
 } from "@headlessui/react";
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useMemo } from "react";
 import CheckOutForm from "../Form/CheckOutForm";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import copy from "copy-to-clipboard";
 import { TiClipboard } from "react-icons/ti";
 import { IoMdCheckmark } from "react-icons/io";
+import { MdCheckBoxOutlineBlank } from "react-icons/md";
+
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import clsx from "clsx";
 
@@ -30,10 +32,12 @@ import LoadingSpinner from "../Shared/LoadingSpinner";
 import { useMutation } from "@tanstack/react-query";
 import { axiosSecure } from "../../hooks/useAxiosSecure";
 import toast from "react-hot-toast";
-
+import { FaSquareCheck } from "react-icons/fa6";
+import { axiosCommon } from "../../hooks/useAxiosCommon";
 
 const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
   const [copied, setCopied] = useState(false);
+  const [couponCopied, setCouponCopied] = useState(false);
   const [processing, setProcessing] = useState(false);
   const { location, getLocation } = useMyLocation();
   const [value, setValue] = useState(location?.address || null);
@@ -60,6 +64,21 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
     setCopied(true);
   };
 
+  const handleCouponCopy = () => {
+    console.log(bookingInfo?.couponInfo?.minPurchaseAmount,bookingInfo?.totalPrice);
+    if (
+      !(bookingInfo?.couponInfo?.minPurchaseAmount <= bookingInfo?.totalPrice)
+    ) {
+      toast.error(
+        `Order amount must need to be more than ${bookingInfo?.couponInfo?.minPurchaseAmount}`
+      );
+      return;
+    }
+    copy(bookingInfo?.couponInfo?.code);
+    console.log(bookingInfo?.couponInfo?.code);
+    setCouponCopied(true);
+  };
+
   // checkout-payment
   const { mutateAsync: paymentAsync } = useMutation({
     mutationKey: ["checkout-payment"],
@@ -78,12 +97,25 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
     },
   });
 
+  // update coupon info
+  const { mutateAsync: updateCouponInfoAsync } = useMutation({
+    mutationKey: ["update-coupon-info", bookingInfo?.couponCopied?._id],
+    mutationFn: async () => {
+      const { data } = await axiosCommon.patch(
+        `/update-usage-coupon-info/${bookingInfo?.couponInfo?._id}`,user?.email
+      );
+      return data;
+    },
+  });
+
   const checkOutPayment = async (e) => {
     e.preventDefault();
     setProcessing(true);
     try {
-      if(!bookingInfo?.availability?.stock>bookingInfo?.quantity){
-        toast.error(`Only ${bookingInfo?.availability?.stock} items are available in the stock right now!!!`);
+      if (!bookingInfo?.availability?.stock > bookingInfo?.quantity) {
+        toast.error(
+          `Only ${bookingInfo?.availability?.stock} items are available in the stock right now!!!`
+        );
         return;
       }
       const address = value.label;
@@ -103,13 +135,12 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
 
       console.log(deliveryInformation);
 
-      const { title, brand, category, totalPrice, quantity,  } =
-        bookingInfo;
+      const { title, brand, category, totalPrice, quantity } = bookingInfo;
       const booking = {
         title,
         brand,
         category,
-        originalPrice:bookingInfo?.salePrice ?? bookingInfo?.price,
+        originalPrice: bookingInfo?.salePrice ?? bookingInfo?.price,
         price: totalPrice,
         quantity,
         selectedImage: bookingInfo?.selectedImage,
@@ -132,12 +163,31 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
       console.log(data?.url);
       window.location.href = data?.url;
       setProcessing(false);
+      // update coupon info
+      if (couponCopied) {
+        updateCouponInfoAsync();
+      }
       console.log(booking);
     } catch (err) {
       toast.error(err.message);
       setProcessing(false);
     }
   };
+
+  const inTotalPrice = useMemo(() => {
+    if (couponCopied) {
+      return Number(
+        (
+          bookingInfo?.totalPrice *
+            (bookingInfo?.couponInfo?.discountValue / 100) || ""
+        ).toFixed(2)
+      );
+    } else {
+      return Number(bookingInfo?.totalPrice.toFixed(2));
+    }
+  }, [couponCopied]);
+
+  console.log({ inTotalPrice });
 
   console.log(bookingInfo);
 
@@ -275,23 +325,41 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
                         <div className="mt-2">
                           <p className="text-sm text-gray-500">
                             Total: $
-                            {subscription?.hasSubscription
-                              ? bookingInfo?.totalPrice
-                              : Number(bookingInfo?.totalPrice) + 7.49}
+                            {subscription?.hasSubscription &&
+                            couponCopied &&
+                            bookingInfo?.couponInfo?.isActive
+                              ? Number(inTotalPrice.toFixed(2)) 
+                              : subscription?.hasSubscription ? Number(bookingInfo?.totalPrice.toFixed(2)):Number((bookingInfo?.totalPrice + 7.49).toFixed(2)) }
                           </p>
                         </div>
                         {/* apply coupon */}
-                        <div className="mt-2 flex items-center justify-between">
-                          <input
-                            type="text"
-                            placeholder="Apply coupon"
-                            className="input input-bordered"
-                          />
-                          <button className="btn bg-amber-500 text-white">
-                            Apply
-                          </button>
-                        </div>
-                        <hr className="mt-8 text-gray-200" />
+                        {subscription?.hasSubscription &&
+                          bookingInfo?.couponInfo?.isActive && (
+                            <>
+                              <div className="flex items-center justify-between text-xs bg-gray-100 p-3 rounded-md">
+                                <span className="text-gray-700">
+                                  Coupon (for subscribers only):
+                                  <br />
+                                  <span className="font-mono text-sm font-bold">
+                                    {bookingInfo?.couponInfo?.code}
+                                  </span>
+                                </span>
+                                <button
+                                  onClick={handleCouponCopy}
+                                  type="button"
+                                  disabled={couponCopied}
+                                  className="ml-2 text-blue-600 hover:text-blue-800 cursor-pointer disabled:text-gray-400"
+                                >
+                                  {couponCopied ? (
+                                    <FaSquareCheck />
+                                  ) : (
+                                    <MdCheckBoxOutlineBlank size={16} />
+                                  )}
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        <hr className="mt-2 text-gray-200" />
                         {/* Copy Test Card Info */}
                         <div className="flex items-center justify-between text-xs bg-gray-100 p-3 rounded-md">
                           <span className="text-gray-700">

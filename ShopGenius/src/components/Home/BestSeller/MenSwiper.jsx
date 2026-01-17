@@ -47,12 +47,12 @@ const MenSwiper = ({ bestProductsMen }) => {
           },
           1024: {
             slidesPerView: 4,
-            spaceBetween: 10,
+            spaceBetween: 8,
             centeredSlides: false,
           },
         }}
         modules={[Navigation]}
-        onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)} // 👈 Track active slide
+        onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)} // Track active slide
         className="mySwiper"
       >
         {bestProductsMen.map((product) => (
@@ -60,10 +60,10 @@ const MenSwiper = ({ bestProductsMen }) => {
             <Link to={`/product/${product?._id}`}>
               <div
                 key={product?._id}
-                className="w-full max-w-xs mx-auto md:mx-5 overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800 my-3 hover:scale-100 duration-300 border border-transparent hover:border-blue-500"
+                className="w-full max-w-xs mx-auto md:mx-0 overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800 my-3 hover:scale-100 duration-300 border border-transparent hover:border-blue-500"
               >
                 <Swiper
-                  spaceBetween={30}
+                  spaceBetween={10}
                   effect={"fade"}
                   navigation={true}
                   modules={[EffectFade, Navigation, Pagination]}
@@ -71,7 +71,7 @@ const MenSwiper = ({ bestProductsMen }) => {
                 >
                   <SwiperSlide>
                     <img
-                      className="object-cover w-full h-52"
+                      className="w-full h-52"
                       src={
                         product?.colors[0]?.image || product?.colors[1]?.image
                       }

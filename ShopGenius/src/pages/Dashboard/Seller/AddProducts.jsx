@@ -10,10 +10,13 @@ import { FaSpinner } from "react-icons/fa6";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import useMyLocation from "../../../hooks/useMyLocation";
 import { useEffect } from "react";
+import { axiosCommon } from "../../../hooks/useAxiosCommon";
 
 const AddProduct = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [code, setCode] = useState("");
+  const [ids, setIds] = useState([]);
 
   const [loc, setLoc] = useState();
 
@@ -33,6 +36,16 @@ const AddProduct = () => {
     }
     console.log(location);
   }, [location]);
+
+  const getAllIds = async () => {
+    const allIds = await axiosSecure("/get-all-ids");
+    console.log(allIds.data);
+    setIds(new Set(allIds.data));
+  };
+
+  useEffect(() => {
+    getAllIds();
+  }, []);
 
   console.log(loc);
 
@@ -104,6 +117,26 @@ const AddProduct = () => {
     const finalPrice = Math.max(0, Number(calc.toFixed(2)));
     return finalPrice;
   }, [onSale, discountType, discountValue]);
+
+  // generate a unique code
+  const generateCode = async () => {
+    let code;
+
+    do {
+      // getting 3 random UPPERCASE letters
+      const letters = Array.from({ length: 3 }, () =>
+        String.fromCharCode(65 + Math.floor(Math.random() * 26))
+      ).join("");
+      // generate 3 random digits
+      const numbers = Array.from({ length: 3 }, () =>
+        Math.floor(Math.random() * 10)
+      ).join("");
+
+      code = letters + numbers;
+    } while (ids.has(code));
+    setCode(code);
+  };
+
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
@@ -254,13 +287,25 @@ const AddProduct = () => {
             />
           </div>
 
-          <input
-            type="text"
-            name="productId"
-            placeholder="Product ID"
-            required
-            className="input input-bordered w-full"
-          />
+          <div className="col-span-2">
+            <div className="grid-cols-12">
+              <input
+                type="text"
+                name="productId"
+                placeholder="Product ID (Generate a productId by clicking on the button below)"
+                required
+                value={code}
+                readOnly
+                className="input input-bordered w-full col-span-9"
+              />
+              <div
+                onClick={generateCode}
+                className="btn col-span-12 my-2 bg-blue-500 text-white rounded"
+              >
+                Generate
+              </div>
+            </div>
+          </div>
 
           <textarea
             name="description"
